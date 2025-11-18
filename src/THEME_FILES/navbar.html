@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+      ::selection {
+        background-color: oklch(92.3% 0.003 48.717);
+        color: oklch(21.6% 0.006 56.043);
+      }
+
+      .full-width-input {
+        min-width: 0;
+      }
+    </style>
+  </head>
+  <body
+    class="flex flex-col justify-between items-center min-h-screen gap-6 bg-stone-900 font-mono font-extralight text-stone-500 tracking-wide"
+  >
+    <nav
+      class="flex sticky top-0 items-center justify-between w-full h-24 px-4 sm:px-8 lg:px-16 xl:px-20 2xl:px-40"
+    >
+      <a class="cursor-pointer text-2xl sm:text-3xl" href="./home.html"
+        >defAPI</a
+      >
+      <div class="flex items-center gap-x-4 sm:gap-x-8">
+        <a
+          class="group flex cursor-pointer rounded-lg outline-1 outline-transparent px-3 py-2 sm:px-4 sm:py-2.5 transition duration-200 ease-in-out hover:outline-stone-400"
+          href="#"
+        >
+          <span
+            class="text-sm sm:text-base transition duration-200 ease-in-out group-hover:text-stone-400"
+            >채팅 보기</span
+          >
+        </a>
+        <a
+          class="size-12 cursor-pointer rounded-full bg-stone-500 border-2 border-transparent transition duration-200 ease-in-out hover:border-stone-400"
+          title="프로필 보기"
+          href="#"
+        >
+          <img />
+        </a>
+      </div>
+    </nav>
+  </body>
+</html>

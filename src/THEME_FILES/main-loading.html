@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+      ::selection {
+        background-color: oklch(92.3% 0.003 48.717);
+        color: oklch(21.6% 0.006 56.043);
+      }
+
+      .full-width-input {
+        min-width: 0;
+      }
+    </style>
+    <title>Security Analysis - defAPI</title>
+  </head>
+  <body
+    class="flex flex-col justify-between items-center min-h-screen gap-6 bg-stone-900 font-mono font-extralight text-stone-500 tracking-wide"
+  >
+    <nav
+      class="flex sticky top-0 items-center justify-between w-full h-24 px-4 sm:px-8 lg:px-16 xl:px-20 2xl:px-40"
+    >
+      <a
+        class="cursor-pointer text-2xl sm:text-3xl"
+        href="./home-logged-in.html"
+        >defAPI</a
+      >
+      <div class="flex items-center gap-x-4 sm:gap-x-8">
+        <a
+          class="group flex cursor-pointer rounded-lg outline-1 outline-transparent px-3 py-2 sm:px-4 sm:py-2.5 transition duration-200 ease-in-out hover:outline-stone-400"
+          href="#"
+        >
+          <span
+            class="text-sm sm:text-base transition duration-200 ease-in-out group-hover:text-stone-400"
+            >채팅 보기</span
+          >
+        </a>
+        <a
+          class="size-12 cursor-pointer rounded-full bg-stone-500 border-2 border-transparent transition duration-200 ease-in-out hover:border-stone-400"
+          title="프로필 보기"
+          href="#"
+        >
+          <img />
+        </a>
+      </div>
+    </nav>
+
+    <main
+      class="flex flex-col grow gap-16 justify-center items-center w-full h-full px-16"
+    >
+      <svg
+        class="size-16 sm:size-24 fill-stone-500 animate-pulse"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+        <g
+          id="SVGRepo_tracerCarrier"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        ></g>
+        <g id="SVGRepo_iconCarrier">
+          <path
+            d="M18.3281 5.67L6.58813 17.41C6.14813 17.85 5.40813 17.79 5.04813 17.27C3.80813 15.46 3.07812 13.32 3.07812 11.12V6.73C3.07812 5.91 3.69813 4.98 4.45813 4.67L10.0281 2.39C11.2881 1.87 12.6881 1.87 13.9481 2.39L17.9981 4.04C18.6581 4.31 18.8281 5.17 18.3281 5.67Z"
+          ></path>
+          <path
+            d="M19.27 7.04159C19.92 6.49159 20.91 6.96159 20.91 7.81159V11.1216C20.91 16.0116 17.36 20.5916 12.51 21.9316C12.18 22.0216 11.82 22.0216 11.48 21.9316C10.06 21.5316 8.74001 20.8616 7.61001 19.9816C7.13001 19.6116 7.08001 18.9116 7.50001 18.4816C9.68001 16.2516 16.06 9.75159 19.27 7.04159Z"
+          ></path>
+        </g>
+      </svg>
+
+      <div
+        class="flex items-center justify-center w-full h-14 sm:h-16 max-w-5xl min-w-96"
+      >
+        <span class="text-xl cursor-default">보안 약점 분석 중...</span>
+      </div>
+    </main>
+  </body>
+</html>
