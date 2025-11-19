@@ -3,7 +3,9 @@ import { RouterLink } from "vue-router";
 </script>
 
 <template>
-  <div class="flex flex-col justify-evenly items-center gap-6 md:flex-row">
+  <div
+    class="flex flex-col justify-evenly items-center gap-6 py-16 md:flex-row md:py-0"
+  >
     <RouterLink
       class="group absolute top-8 left-8 flex justify-center items-center size-10 cursor-pointer"
       title="돌아가기"
