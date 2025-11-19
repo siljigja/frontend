@@ -2,7 +2,7 @@
 import { RouterView } from "vue-router";
 import { ref, provide } from "vue";
 
-const isSignedIn = ref(false);
+const isSignedIn = ref(true);
 provide("is-signed-in", isSignedIn.value);
 </script>
 

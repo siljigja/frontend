@@ -6,7 +6,7 @@ const isSignedIn = inject("is-signed-in");
 </script>
 
 <template>
-  <div class="flex flex-col h-dvh justify-between items-center gap-16">
+  <div class="flex flex-col h-dvh justify-between items-center gap-6">
     <Navbar />
     <main
       class="flex flex-col items-center justify-between w-full h-full max-w-6xl px-4 md:px-8"
@@ -59,7 +59,6 @@ const isSignedIn = inject("is-signed-in");
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          <!-- SVG paths... -->
           <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
           <g
             id="SVGRepo_tracerCarrier"
@@ -77,6 +76,30 @@ const isSignedIn = inject("is-signed-in");
         </svg>
         <span class="text-stone-400 text-xl underline">Get Started</span>
       </RouterLink>
+      <div
+        v-else
+        class="flex flex-col items-center justify-center w-fit h-fit gap-2.5 cursor-default mt-12 mb-16"
+      >
+        <span class="text-stone-400 text-xl">Click to Start</span>
+        <svg
+          class="size-8 fill-stone-500"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+          <g
+            id="SVGRepo_tracerCarrier"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          ></g>
+          <g id="SVGRepo_iconCarrier">
+            <path
+              d="M17.9188 8.17969H11.6888H6.07877C5.11877 8.17969 4.63877 9.33969 5.31877 10.0197L10.4988 15.1997C11.3288 16.0297 12.6788 16.0297 13.5088 15.1997L15.4788 13.2297L18.6888 10.0197C19.3588 9.33969 18.8788 8.17969 17.9188 8.17969Z"
+            ></path>
+          </g>
+        </svg>
+      </div>
 
       <div v-if="!isSignedIn" class="w-full max-w-5xl h-fit">
         <section
@@ -161,7 +184,7 @@ const isSignedIn = inject("is-signed-in");
       <RouterLink
         v-else
         class="w-full max-w-5xl h-fit cursor-pointer outline-2 outline-transparent outline-offset-8 rounded-t-3xl hover:outline-pink-500"
-        to="/"
+        to="/analysis"
       >
         <section
           class="flex flex-col items-center justify-end w-full h-fit gap-10 md:gap-16 rounded-t-3xl border-2 border-b-0 border-stone-400 bg-stone-800 py-12 sm:py-16 md:py-20 px-36"
@@ -193,7 +216,7 @@ const isSignedIn = inject("is-signed-in");
           >
             <input
               type="text"
-              placeholder="클릭해서 사용"
+              placeholder="이 코드의 약점을 분석해줘"
               class="full-width-input w-full h-fit bg-transparent text-base placeholder:text-stone-400 focus:outline-none cursor-pointer"
               disabled
             />

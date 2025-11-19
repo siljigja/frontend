@@ -7,28 +7,30 @@ const isSignedIn = inject("is-signed-in");
 
 <template>
   <nav
-    class="flex sticky top-0 items-center justify-between w-full h-24 px-4 sm:px-8 lg:px-16 xl:px-20 2xl:px-40"
+    class="flex sticky top-0 items-center justify-between w-full px-4 py-4 sm:px-8 lg:px-16 xl:px-20 2xl:px-40"
   >
-    <RouterLink class="cursor-pointer text-2xl sm:text-3xl" to="/"
+    <RouterLink
+      class="cursor-pointer text-2xl sm:text-3xl transition ease-in-out duration-200 hover:text-stone-400"
+      to="/"
       >defAPI</RouterLink
     >
     <div v-if="isSignedIn" class="flex items-center gap-x-4 sm:gap-x-8">
-      <a
+      <RouterLink
         class="group flex cursor-pointer rounded-lg outline-1 outline-transparent px-3 py-2 sm:px-4 sm:py-2.5 transition duration-200 ease-in-out hover:outline-stone-400"
-        href="#"
+        to="/chats"
       >
         <span
           class="text-sm sm:text-base transition duration-200 ease-in-out group-hover:text-stone-400"
           >채팅 보기</span
         >
-      </a>
-      <a
+      </RouterLink>
+      <RouterLink
         class="size-12 cursor-pointer rounded-full bg-stone-500 border-2 border-transparent transition duration-200 ease-in-out hover:border-stone-400"
         title="프로필 보기"
-        href="#"
+        to="/profile"
       >
         <img />
-      </a>
+      </RouterLink>
     </div>
     <div v-else class="flex items-center gap-x-4 sm:gap-x-8">
       <RouterLink
