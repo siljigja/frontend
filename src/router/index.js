@@ -5,6 +5,7 @@ import SignUpView from "@/views/SignUpView.vue";
 import AnalysisView from "@/views/AnalysisView.vue";
 import ChatsView from "@/views/ChatsView.vue";
 import ProfileView from "@/views/ProfileView.vue";
+import NotFoundView from "@/views/NotFoundView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -38,6 +39,11 @@ const router = createRouter({
       path: "/profile",
       name: "profile",
       component: ProfileView,
+    },
+    {
+      path: "/:catchAll(.*)",
+      name: "not-found",
+      component: NotFoundView,
     },
   ],
 });
