@@ -17,11 +17,11 @@ const isSignedIn = inject("is-signed-in");
     <div v-if="isSignedIn" class="flex items-center gap-x-4 sm:gap-x-8">
       <RouterLink
         class="group flex cursor-pointer rounded-lg outline-1 outline-transparent px-3 py-2 sm:px-4 sm:py-2.5 transition duration-200 ease-in-out hover:outline-stone-400"
-        to="/chats"
+        to="/analysis"
       >
         <span
           class="text-sm sm:text-base transition duration-200 ease-in-out group-hover:text-stone-400"
-          >채팅 보기</span
+          >약점 분석</span
         >
       </RouterLink>
       <RouterLink
