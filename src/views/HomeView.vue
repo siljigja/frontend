@@ -74,7 +74,7 @@ const isSignedIn = inject("is-signed-in");
       </div>
       <RouterLink
         v-else
-        class="flex items-center justify-center w-fit h-fit gap-2.5 cursor-pointer mt-12 mb-16"
+        class="group flex items-center justify-center w-fit h-fit gap-2.5 cursor-pointer mt-12 mb-16"
         to="/sign-in"
       >
         <svg
@@ -98,19 +98,21 @@ const isSignedIn = inject("is-signed-in");
             ></path>
           </g>
         </svg>
-        <span class="text-stone-400 text-xl underline">지금 시작하기</span>
+        <span class="text-stone-400 text-xl group-hover:underline"
+          >지금 시작하기</span
+        >
       </RouterLink>
 
       <RouterLink
         v-if="isSignedIn"
-        class="w-full max-w-5xl h-fit cursor-pointer outline-2 outline-transparent outline-offset-8 rounded-t-3xl hover:outline-pink-500"
+        class="w-full max-w-5xl h-fit cursor-pointer rounded-t-3xl transition duration-200 ease-in-out shadow-[0_0_15px_5px]/40 shadow-stone-400/50 hover:shadow-[0_0_10px_6px]/70 hover:shadow-pink-500/50"
         to="/analysis"
       >
         <section
-          class="flex flex-col items-center justify-end w-full h-fit gap-10 md:gap-16 rounded-t-3xl border-2 border-b-0 border-stone-400 bg-stone-800 py-12 sm:py-16 md:py-20 px-36"
+          class="flex flex-col items-center justify-end w-full h-fit gap-10 md:gap-16 rounded-t-3xl border-2 border-b-0 border-stone-500 py-12 sm:py-16 md:py-20 px-36"
         >
           <svg
-            class="size-16 sm:size-24 fill-stone-400"
+            class="size-16 sm:size-24 fill-stone-500"
             viewBox="0 0 24 24"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
@@ -132,18 +134,18 @@ const isSignedIn = inject("is-signed-in");
           </svg>
 
           <div
-            class="flex items-center justify-between w-full h-14 sm:h-16 min-w-96 rounded-full border-2 border-stone-400 px-5 sm:px-7"
+            class="flex items-center justify-between w-full h-14 sm:h-16 min-w-96 rounded-full border-2 border-stone-500 px-5 sm:px-7"
           >
             <input
               type="text"
-              placeholder="코드 파일을 업로드하거나 여기에 입력하세요"
-              class="full-width-input w-full h-fit bg-transparent text-base placeholder:text-stone-400 focus:outline-none cursor-pointer"
+              placeholder="코드 파일을 업로드하거나 직접 입력하세요"
+              class="full-width-input w-full h-fit bg-transparent text-base placeholder:text-stone-500 focus:outline-none cursor-pointer"
               disabled
             />
 
             <div class="flex shrink-0 w-fit h-fit gap-3">
               <svg
-                class="size-6 fill-stone-400 transition duration-150"
+                class="size-6 fill-stone-500 transition duration-150"
                 viewBox="0 0 24 24"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -164,7 +166,7 @@ const isSignedIn = inject("is-signed-in");
                 </g>
               </svg>
               <svg
-                class="size-6 fill-stone-400 transition duration-150"
+                class="size-6 fill-stone-500 transition duration-150"
                 viewBox="0 0 24 24"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -216,7 +218,7 @@ const isSignedIn = inject("is-signed-in");
           >
             <input
               type="text"
-              placeholder="코드 파일을 업로드하거나 여기에 입력하세요"
+              placeholder="코드 파일을 업로드하거나 직접 입력하세요"
               class="full-width-input w-full h-fit bg-transparent text-base placeholder:text-stone-400 focus:outline-none cursor-not-allowed"
               disabled
             />

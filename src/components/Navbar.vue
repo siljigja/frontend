@@ -7,10 +7,10 @@ const isSignedIn = inject("is-signed-in");
 
 <template>
   <nav
-    class="flex sticky top-0 items-center justify-between w-full px-4 py-4 sm:px-8 lg:px-16 xl:px-20 2xl:px-40"
+    class="flex sticky top-0 items-center justify-between w-full p-4 sm:px-8 lg:px-16 xl:px-20 2xl:px-40"
   >
     <RouterLink
-      class="cursor-pointer text-2xl sm:text-3xl transition ease-in-out duration-200 hover:text-stone-400"
+      class="cursor-pointer text-2xl sm:text-3xl transition duration-200 ease-in-out hover:text-stone-400"
       title="홈으로 이동"
       to="/"
       >defAPI</RouterLink
@@ -26,13 +26,13 @@ const isSignedIn = inject("is-signed-in");
           >Analyze Code</span
         >
       </RouterLink>
-      <RouterLink
+      <!-- RouterLink
         class="size-12 cursor-pointer rounded-full bg-stone-500 border border-transparent transition duration-200 ease-in-out hover:border-stone-400"
         title="프로필 보기"
         to="/profile"
       >
         <img />
-      </RouterLink>
+      </RouterLink -->
     </div>
     <div v-else class="flex items-center gap-x-4 sm:gap-x-8">
       <RouterLink

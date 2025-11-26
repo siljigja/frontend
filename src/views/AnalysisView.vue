@@ -113,6 +113,7 @@ const removeFile = (idToRemove) => {
 
 const handleSubmit = () => {
   if (files.value.length > 0 || message.value.trim() !== "") {
+    // 제출 처리
     isFirstInput.value = false;
     awaitingResponse.value = true;
     startLoadingAnimation();
@@ -136,7 +137,7 @@ const handleSubmit = () => {
 
       awaitingResponse.value = false;
       stopLoadingAnimation();
-    }, 2000);
+    }, 5000);
   }
 };
 
@@ -217,17 +218,14 @@ const prevIssue = () => {
 };
 
 const hasUnsavedData = computed(() => {
-  return (
-    (files.value.length > 0 || message.value.trim() !== "") &&
-    !analysisResult.value
-  );
+  return files.value.length > 0 || message.value.trim() !== "";
 });
 
 // 페이지 이탈 방지
 onBeforeRouteLeave((to, from, next) => {
   if (hasUnsavedData.value) {
     const confirmed = window.confirm(
-      "페이지를 떠나시겠습니까? 데이터는 저장되지 않습니다."
+      "정말 페이지를 떠나시겠습니까?\n현재 데이터는 저장되지 않습니다."
     );
     if (confirmed) next();
     else next(false);
@@ -263,7 +261,6 @@ onBeforeUnmount(() => {
       class="flex flex-col grow gap-16 justify-center items-center w-full h-full px-16"
     >
       <svg
-        v-if="message === '' && files.length === 0"
         class="size-16 sm:size-24 fill-stone-500"
         viewBox="0 0 24 24"
         fill="none"
@@ -461,7 +458,6 @@ onBeforeUnmount(() => {
         <!-- 왼쪽: 수정된 코드 -->
         <div
           class="group flex flex-col rounded-xl border border-stone-500 w-5/12 h-full overflow-hidden relative"
-          title="수정된 코드"
         >
           <div
             class="flex items-center justify-between bg-stone-900 px-4 py-2 border-b border-stone-500 text-sm h-11"
@@ -586,7 +582,12 @@ onBeforeUnmount(() => {
               class="bg-stone-800/50 rounded-lg p-4 border border-stone-700"
             >
               <span
-                class="text-pink-500/80 text-xs font-bold uppercase tracking-wider"
+                class="text-xs font-bold uppercase tracking-wider"
+                :style="{
+                  color:
+                    currentIssue.display_meta.severity_color ||
+                    'oklch(59.2% 0.249 0.584)',
+                }"
                 >Potential Exploit Scenario</span
               >
               <p class="text-stone-400 mt-1 text-xs leading-relaxed">
