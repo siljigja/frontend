@@ -11,17 +11,19 @@ const isSignedIn = inject("is-signed-in");
   >
     <RouterLink
       class="cursor-pointer text-2xl sm:text-3xl transition ease-in-out duration-200 hover:text-stone-400"
+      title="홈으로 이동"
       to="/"
       >defAPI</RouterLink
     >
     <div v-if="isSignedIn" class="flex items-center gap-x-4 sm:gap-x-8">
       <RouterLink
-        class="group flex cursor-pointer rounded-lg outline-1 outline-transparent px-3 py-2 sm:px-4 sm:py-2.5 transition duration-200 ease-in-out hover:outline-stone-400"
+        class="group flex cursor-pointer rounded-xl outline-1 outline-transparent px-3 py-2 sm:px-4 sm:py-2.5 transition duration-200 ease-in-out hover:outline-stone-400"
         to="/analysis"
       >
         <span
           class="text-sm sm:text-base transition duration-200 ease-in-out group-hover:text-stone-400"
-          >약점 분석</span
+          title="취약점 분석으로 이동"
+          >Analyze Code</span
         >
       </RouterLink>
       <RouterLink
@@ -34,19 +36,21 @@ const isSignedIn = inject("is-signed-in");
     </div>
     <div v-else class="flex items-center gap-x-4 sm:gap-x-8">
       <RouterLink
-        class="group flex cursor-pointer rounded-lg outline-1 outline-transparent px-3 py-2 sm:px-4 sm:py-2.5 transition duration-200 ease-in-out hover:outline-stone-400"
+        class="group flex cursor-pointer rounded-xl outline-1 outline-transparent px-3 py-2 sm:px-4 sm:py-2.5 transition duration-200 ease-in-out hover:outline-stone-400"
+        title="로그인"
         to="/sign-in"
       >
         <span
           class="text-sm sm:text-base transition duration-200 ease-in-out group-hover:text-stone-400"
-          >로그인</span
+          >Sign In</span
         >
       </RouterLink>
       <RouterLink
-        class="group flex cursor-pointer rounded-lg bg-stone-500 px-3 py-2 sm:px-4 sm:py-2.5 transition duration-200 ease-in-out hover:bg-stone-400"
+        class="group flex cursor-pointer rounded-xl bg-stone-500 px-3 py-2 sm:px-4 sm:py-2.5 transition duration-200 ease-in-out hover:bg-stone-400"
+        title="회원가입"
         to="/sign-up"
       >
-        <span class="text-stone-900 text-sm sm:text-base">회원가입</span>
+        <span class="text-stone-900 text-sm sm:text-base">Sign Up</span>
       </RouterLink>
     </div>
   </nav>

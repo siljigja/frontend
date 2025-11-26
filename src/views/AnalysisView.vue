@@ -4,6 +4,14 @@ import { ref, onMounted, onBeforeUnmount, watch, computed } from "vue";
 import Navbar from "@/components/Navbar.vue";
 import UploadedFile from "@/components/UploadedFile.vue";
 import UploadedFileModal from "@/components/UploadedFileModal.vue";
+import mockResponse from "@/mock_response.json";
+import Prism from "prismjs";
+
+import "prismjs/themes/prism-tomorrow.css";
+import "prismjs/components/prism-javascript"; // Load JS support
+
+// --- JSON 예시 데이터 ---
+const MOCK_RESPONSE = mockResponse;
 
 const isFirstInput = ref(true);
 const awaitingResponse = ref(false);
@@ -17,11 +25,12 @@ const loadingMsgIndex = ref(0);
 const loadingText = ref(loadingTexts[0]);
 let loadingInterval = null;
 
-const startLoadingAnimation = () => {
-  if (loadingInterval) {
-    clearInterval(loadingInterval);
-  }
+// Result Display State
+const analysisResult = ref(null);
+const currentIssueIndex = ref(0);
 
+const startLoadingAnimation = () => {
+  if (loadingInterval) clearInterval(loadingInterval);
   loadingInterval = setInterval(() => {
     loadingMsgIndex.value = (loadingMsgIndex.value + 1) % loadingTexts.length;
     loadingText.value = loadingTexts[loadingMsgIndex.value];
@@ -38,29 +47,24 @@ const stopLoadingAnimation = () => {
 const files = ref([]);
 const message = ref("");
 const fileInputRef = ref(null);
-
 const submittedSource = ref(null);
 const isSourceModalOpen = ref(false);
 
 const openSourceModal = () => {
   isSourceModalOpen.value = true;
 };
-
 const closeSourceModal = () => {
   isSourceModalOpen.value = false;
 };
 
 const placeholderText = computed(() => {
-  if (files.value.length > 0) {
+  if (files.value.length > 0)
     return "파일이 업로드되었습니다. 분석을 시작하세요.";
-  }
   return "코드 파일을 업로드하거나 여기에 입력하세요";
 });
 
 watch(message, (newMessage) => {
-  if (newMessage.trim() !== "") {
-    files.value = [];
-  }
+  if (newMessage.trim() !== "") files.value = [];
 });
 
 const formatFileSize = (bytes) => {
@@ -73,11 +77,7 @@ const formatFileSize = (bytes) => {
 
 const handleFileChange = (e) => {
   const newFile = e.target.files[0];
-
-  if (!newFile) {
-    return;
-  }
-
+  if (!newFile) return;
   const newFileObject = {
     id: Date.now() + Math.random(),
     file: newFile,
@@ -85,13 +85,9 @@ const handleFileChange = (e) => {
     size: newFile.size,
     type: newFile.type,
   };
-
   files.value = [newFileObject];
   message.value = "";
-
-  if (e.target) {
-    e.target.value = null;
-  }
+  if (e.target) e.target.value = null;
 };
 
 const removeFile = (idToRemove) => {
@@ -112,31 +108,73 @@ const handleSubmit = () => {
         file: new File([message.value], "TypedInput.txt", {
           type: "text/plain",
         }),
-        size: new Blob([message.value]).size, // 텍스트 크기
+        size: new Blob([message.value]).size,
       };
     }
 
+    // AI 응답 시뮬레이션
     setTimeout(() => {
+      // 예시 응답 불러오기
+      analysisResult.value = MOCK_RESPONSE;
+      currentIssueIndex.value = 0;
+
       awaitingResponse.value = false;
       stopLoadingAnimation();
-    }, 3000);
+    }, 2000);
   }
 };
 
+// --- Result Logic ---
+
+const currentIssue = computed(() => {
+  if (!analysisResult.value || !analysisResult.value.issues) return null;
+  return analysisResult.value.issues[currentIssueIndex.value];
+});
+
+// Computed property for syntax highlighting
+const highlightedCode = computed(() => {
+  if (!currentIssue.value || !currentIssue.value.fix_code) return "";
+  // Hardcoded to javascript for this demo.
+  // In a real app, you'd check submittedSource.value.name extension.
+  return Prism.highlight(
+    currentIssue.value.fix_code,
+    Prism.languages.javascript,
+    "javascript"
+  );
+});
+
+const nextIssue = () => {
+  if (
+    analysisResult.value &&
+    currentIssueIndex.value < analysisResult.value.issues.length - 1
+  ) {
+    currentIssueIndex.value++;
+  }
+};
+
+const prevIssue = () => {
+  if (currentIssueIndex.value > 0) {
+    currentIssueIndex.value--;
+  }
+};
+
+// --- Navigation Guard ---
 const hasUnsavedData = computed(() => {
-  return files.value.length > 0 || message.value.trim() !== "";
+  // Once analyzed (analysisResult exists), we allow navigation without warning
+  // because the "unsaved input" has technically been "saved/processed".
+  return (
+    (files.value.length > 0 || message.value.trim() !== "") &&
+    !analysisResult.value
+  );
 });
 
 onBeforeRouteLeave((to, from, next) => {
   if (hasUnsavedData.value) {
     const confirmed = window.confirm(
-      "정말 페이지를 떠나시겠습니까? 데이터는 저장되지 않습니다."
+      "페이지를 떠나시겠습니까? 데이터는 저장되지 않습니다."
     );
-    if (confirmed) {
-      next();
-    } else {
-      next(false);
-    }
+    if (confirmed) next();
+    else next(false);
   } else {
     next();
   }
@@ -145,7 +183,7 @@ onBeforeRouteLeave((to, from, next) => {
 const handleBeforeUnload = (e) => {
   if (hasUnsavedData.value) {
     e.preventDefault();
-    return "정말 페이지를 새로고침하시겠습니까? 데이터는 저장되지 않습니다.";
+    return "페이지를 새로고침하시겠습니까? 데이터는 저장되지 않습니다.";
   }
 };
 
@@ -162,7 +200,8 @@ onBeforeUnmount(() => {
 <template>
   <div class="flex flex-col justify-between items-center gap-6 h-screen">
     <Navbar />
-    <!-- 코드 입력 -->
+
+    <!-- 입력 -->
     <main
       v-if="isFirstInput"
       class="flex flex-col grow gap-16 justify-center items-center w-full h-full px-16"
@@ -294,6 +333,7 @@ onBeforeUnmount(() => {
         </div>
       </form>
     </main>
+
     <!-- 로딩 -->
     <main
       v-else-if="awaitingResponse"
@@ -322,17 +362,18 @@ onBeforeUnmount(() => {
       </svg>
       <span class="text-lg animate-pulse">{{ loadingText }}</span>
     </main>
+
     <!-- 결과 -->
     <main
-      v-if="!awaitingResponse && !isFirstInput"
-      class="flex flex-col justify-between items-center size-full gap-2"
+      v-else-if="!awaitingResponse && !isFirstInput && currentIssue"
+      class="flex flex-col justify-start items-center size-full gap-2 pt-4 pb-8 overflow-hidden"
     >
       <button
         @click="openSourceModal"
-        class="group flex justify-center items-center px-4 py-2 rounded-xl border-2 border-stone-500 cursor-pointer"
+        class="group flex justify-center items-center px-4 py-2 rounded-xl border-2 border-stone-500 cursor-pointer mb-4"
       >
         <svg
-          class="size-6 fill-pink-500/70 shrink-0"
+          class="size-5 fill-stone-500 shrink-0"
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -352,20 +393,116 @@ onBeforeUnmount(() => {
             ></path>
           </g>
         </svg>
-        <span class="text-sm pl-2 text-stone-400 group-hover:underline"
-          >원본 코드 보기</span
+        <span
+          class="text-sm pl-2 text-stone-400 group-hover:underline"
+          title="원본 코드 보기"
+          >Original Code</span
         >
       </button>
-      <section class="flex justify-center items-center size-full gap-8">
+
+      <section
+        class="flex justify-center items-stretch size-full gap-8 h-full px-8 min-h-0"
+      >
+        <!-- 왼쪽: 수정된 코드 -->
         <div
-          class="flex justify-center items-center rounded-lg border-2 border-stone-500 w-5/12 h-11/12"
+          class="flex flex-col rounded-xl border-2 border-stone-500 w-5/12 h-full overflow-hidden"
+          title="클립보드에 복사"
         >
-          <code></code>
+          <div
+            class="bg-stone-900 px-4 py-2 border-b border-stone-500 text-sm text-stone-400"
+          >
+            수정된 코드 (클릭해서 복사)
+          </div>
+          <pre
+            class="scrollbar-thin scrollbar-thumb-stone-600 scrollbar-track-stone-800 overflow-auto h-full p-4 m-0 text-sm"
+          ><code v-html="highlightedCode" class="language-javascript"></code></pre>
         </div>
+
+        <!-- 오른쪽: 설명 -->
         <div
-          class="flex justify-center items-center rounded-lg border-2 border-stone-500 w-5/12 h-11/12"
+          class="flex flex-col rounded-xl border-2 border-stone-500 w-5/12 h-full overflow-hidden"
         >
-          <p></p>
+          <!-- 헤더 & 내비게이션 -->
+          <div
+            class="flex justify-between items-center bg-stone-900 px-4 py-2 border-b border-stone-500"
+          >
+            <div class="text-sm text-stone-400">
+              발견된 취약점 {{ currentIssueIndex + 1 }} /
+              {{ analysisResult.issues.length }}
+            </div>
+            <div class="flex gap-2">
+              <button
+                @click="prevIssue"
+                :disabled="currentIssueIndex === 0"
+                class="text-xs px-2 py-1 rounded border border-stone-600 hover:bg-stone-700 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed text-stone-300"
+              >
+                이전
+              </button>
+              <button
+                @click="nextIssue"
+                :disabled="
+                  currentIssueIndex === analysisResult.issues.length - 1
+                "
+                class="text-xs px-2 py-1 rounded border border-stone-600 hover:bg-stone-700 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed text-stone-300"
+              >
+                다음
+              </button>
+            </div>
+          </div>
+
+          <!-- 내용 -->
+          <div
+            class="flex flex-col p-6 gap-6 overflow-y-auto scrollbar-thin scrollbar-thumb-stone-600"
+          >
+            <div>
+              <span class="text-stone-400 text-xs uppercase tracking-wider"
+                >Vulnerability Name</span
+              >
+              <h2 class="text-xl font-bold text-stone-200 mt-1">
+                {{ currentIssue.name }}
+              </h2>
+            </div>
+
+            <div class="flex gap-4 items-center">
+              <span
+                class="px-3 py-1 rounded-full text-sm font-semibold uppercase text-white border-2"
+                :style="{
+                  borderColor,
+                  color: currentIssue.display_meta.severity_color || '#666',
+                }"
+              >
+                {{ currentIssue.severity }}
+              </span>
+              <span class="text-stone-400 text-sm"
+                >Confidence:
+                {{ (currentIssue.confidence * 100).toFixed(0) }}%</span
+              >
+            </div>
+
+            <div class="border-t border-stone-700 pt-4">
+              <span class="text-stone-400 text-xs uppercase tracking-wider"
+                >Description & Analysis</span
+              >
+              <p
+                class="text-stone-300 mt-2 text-sm leading-relaxed whitespace-pre-wrap"
+              >
+                {{ currentIssue.description }}
+              </p>
+            </div>
+
+            <div
+              v-if="currentIssue.exploit_example"
+              class="bg-stone-800/50 rounded-lg p-4 border border-stone-700"
+            >
+              <span
+                class="text-pink-500/80 text-xs font-bold uppercase tracking-wider"
+                >Potential Exploit Scenario</span
+              >
+              <p class="text-stone-400 mt-1 text-xs leading-relaxed">
+                {{ currentIssue.exploit_example }}
+              </p>
+            </div>
+          </div>
         </div>
       </section>
     </main>
@@ -378,3 +515,25 @@ onBeforeUnmount(() => {
     :file="submittedSource"
   />
 </template>
+
+<style>
+code[class*="language-"],
+pre[class*="language-"] {
+  background-color: oklch(21.6% 0.006 56.043) !important; /* stone-900 */
+  text-shadow: none !important;
+  font-family: Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+  font-size: 14px;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: oklch(26.8% 0.007 34.298); /* stone-800 */
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: oklch(55.3% 0.013 58.071); /* stone-600 */
+  border-radius: 4px;
+}
+</style>
