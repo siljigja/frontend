@@ -41,7 +41,7 @@ const isSignedIn = inject("is-signed-in");
         </div>
 
         <p class="w-1/3 h-fit max-w-lg text-sm md:text-base">
-          프로젝트 기능 설명. Lorem ipsum dolor sit amet consectetur. Faucibus
+          프로젝트 기능 설명 Lorem ipsum dolor sit amet consectetur. Faucibus
           volutpat elit sed lacinia. Justo imperdiet ullamcorper est at
           malesuada. Aliquam sagittis at mauris sit ut ultrices lacus blandit
           risus. Ultrices suscipit diam orci tempus ac.
@@ -52,7 +52,7 @@ const isSignedIn = inject("is-signed-in");
         v-if="isSignedIn"
         class="flex flex-col items-center justify-center w-fit h-fit gap-2.5 cursor-default mt-12 mb-16"
       >
-        <span class="text-xl">아래 클릭해서 분석 시작</span>
+        <span class="text-xl">클릭해서 분석 시작</span>
         <svg
           class="size-8 fill-stone-500"
           viewBox="0 0 24 24"
@@ -136,7 +136,7 @@ const isSignedIn = inject("is-signed-in");
           >
             <input
               type="text"
-              placeholder="이 코드의 약점을 분석해줘"
+              placeholder="코드 파일을 업로드하거나 여기에 입력하세요"
               class="full-width-input w-full h-fit bg-transparent text-base placeholder:text-stone-400 focus:outline-none cursor-pointer"
               disabled
             />
@@ -216,7 +216,7 @@ const isSignedIn = inject("is-signed-in");
           >
             <input
               type="text"
-              placeholder="이 코드의 약점을 분석해줘"
+              placeholder="코드 파일을 업로드하거나 여기에 입력하세요"
               class="full-width-input w-full h-fit bg-transparent text-base placeholder:text-stone-400 focus:outline-none cursor-not-allowed"
               disabled
             />

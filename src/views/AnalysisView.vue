@@ -1,8 +1,9 @@
 <script setup>
 import { RouterLink, onBeforeRouteLeave } from "vue-router";
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, onMounted, onBeforeUnmount, watch, computed } from "vue";
 import Navbar from "@/components/Navbar.vue";
 import UploadedFile from "@/components/UploadedFile.vue";
+import UploadedFileModal from "@/components/UploadedFileModal.vue";
 
 const isFirstInput = ref(true);
 const awaitingResponse = ref(false);
@@ -38,23 +39,55 @@ const files = ref([]);
 const message = ref("");
 const fileInputRef = ref(null);
 
+const submittedSource = ref(null);
+const isSourceModalOpen = ref(false);
+
+const openSourceModal = () => {
+  isSourceModalOpen.value = true;
+};
+
+const closeSourceModal = () => {
+  isSourceModalOpen.value = false;
+};
+
+const placeholderText = computed(() => {
+  if (files.value.length > 0) {
+    return "파일이 업로드되었습니다. 분석을 시작하세요.";
+  }
+  return "코드 파일을 업로드하거나 여기에 입력하세요";
+});
+
+watch(message, (newMessage) => {
+  if (newMessage.trim() !== "") {
+    files.value = [];
+  }
+});
+
 const formatFileSize = (bytes) => {
-  if (bytes === 0) return "0 B";
+  if (bytes === 0) return "0 Byte";
   const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB"];
+  const sizes = ["Bytes", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 };
 
 const handleFileChange = (e) => {
-  const newFiles = Array.from(e.target.files).map((file) => ({
+  const newFile = e.target.files[0];
+
+  if (!newFile) {
+    return;
+  }
+
+  const newFileObject = {
     id: Date.now() + Math.random(),
-    file,
-    name: file.name,
-    size: file.size,
-    type: file.type,
-  }));
-  files.value = [...files.value, ...newFiles];
+    file: newFile,
+    name: newFile.name,
+    size: newFile.size,
+    type: newFile.type,
+  };
+
+  files.value = [newFileObject];
+  message.value = "";
 
   if (e.target) {
     e.target.value = null;
@@ -71,29 +104,49 @@ const handleSubmit = () => {
     awaitingResponse.value = true;
     startLoadingAnimation();
 
+    if (files.value.length > 0) {
+      submittedSource.value = files.value[0];
+    } else {
+      submittedSource.value = {
+        name: "code.txt",
+        file: new File([message.value], "TypedInput.txt", {
+          type: "text/plain",
+        }),
+        size: new Blob([message.value]).size, // 텍스트 크기
+      };
+    }
+
     setTimeout(() => {
       awaitingResponse.value = false;
       stopLoadingAnimation();
-      // 여기서 결과 표시
-    }, 5000);
+    }, 3000);
   }
 };
 
-onBeforeRouteLeave((to, from, next) => {
-  const confirmed = window.confirm(
-    "정말 페이지를 떠나시겠습니까? 데이터는 저장되지 않습니다."
-  );
+const hasUnsavedData = computed(() => {
+  return files.value.length > 0 || message.value.trim() !== "";
+});
 
-  if (confirmed) {
-    next();
+onBeforeRouteLeave((to, from, next) => {
+  if (hasUnsavedData.value) {
+    const confirmed = window.confirm(
+      "정말 페이지를 떠나시겠습니까? 데이터는 저장되지 않습니다."
+    );
+    if (confirmed) {
+      next();
+    } else {
+      next(false);
+    }
   } else {
-    next(false);
+    next();
   }
 });
 
 const handleBeforeUnload = (e) => {
-  e.preventDefault();
-  return "정말 페이지를 새로고침하시겠습니까? 데이터는 저장되지 않습니다.";
+  if (hasUnsavedData.value) {
+    e.preventDefault();
+    return "정말 페이지를 새로고침하시겠습니까? 데이터는 저장되지 않습니다.";
+  }
 };
 
 onMounted(() => {
@@ -109,13 +162,13 @@ onBeforeUnmount(() => {
 <template>
   <div class="flex flex-col justify-between items-center gap-6 h-screen">
     <Navbar />
-    <!-- 시작 입력 -->
+    <!-- 코드 입력 -->
     <main
       v-if="isFirstInput"
       class="flex flex-col grow gap-16 justify-center items-center w-full h-full px-16"
     >
       <svg
-        v-if="files.length === 0 && message === ''"
+        v-if="message === '' && files.length === 0"
         class="size-16 sm:size-24 fill-stone-500"
         viewBox="0 0 24 24"
         fill="none"
@@ -140,7 +193,7 @@ onBeforeUnmount(() => {
       <div v-if="files.length > 0" class="w-full max-w-4xl min-w-96 -mb-16">
         <div class="py-3 max-h-48 overflow-y-auto">
           <h2 class="text-sm font-semibold text-stone-500 mb-2">
-            첨부된 파일 {{ files.length }}개:
+            첨부된 파일:
           </h2>
           <div class="flex flex-wrap gap-2">
             <div class="flex flex-wrap gap-2">
@@ -166,9 +219,10 @@ onBeforeUnmount(() => {
         >
           <input
             v-model="message"
-            placeholder="코드 파일을 업로드하거나 여기에 입력하세요"
+            :placeholder="placeholderText"
             type="text"
-            class="full-width-input w-full h-fit bg-transparent text-base text-stone-400 placeholder:text-stone-500 focus:outline-none"
+            class="full-width-input w-full h-fit bg-transparent text-base text-stone-400 placeholder:text-stone-500 focus:outline-none disabled:cursor-not-allowed"
+            :disabled="files.length > 0"
           />
 
           <div class="flex shrink-0 w-fit h-fit gap-3">
@@ -179,11 +233,18 @@ onBeforeUnmount(() => {
               class="hidden"
               ref="fileInputRef"
               @change="handleFileChange"
-              multiple
+              :disabled="message.trim() !== ''"
             />
-            <label for="file-upload" title="코드 파일 업로드">
+            <label
+              for="file-upload"
+              title="코드 파일 업로드"
+              :class="{
+                'cursor-pointer hover:fill-stone-400': message.trim() === '',
+                'opacity-50 cursor-not-allowed': message.trim() !== '',
+              }"
+            >
               <svg
-                class="size-6 cursor-pointer fill-stone-500 transition duration-150 hover:fill-stone-400"
+                class="size-6 fill-stone-500 transition duration-200 hover:fill-stone-400"
                 viewBox="0 0 24 24"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -262,6 +323,58 @@ onBeforeUnmount(() => {
       <span class="text-lg animate-pulse">{{ loadingText }}</span>
     </main>
     <!-- 결과 -->
-    <main v-if="!awaitingResponse && !isFirstInput"></main>
+    <main
+      v-if="!awaitingResponse && !isFirstInput"
+      class="flex flex-col justify-between items-center size-full gap-2"
+    >
+      <button
+        @click="openSourceModal"
+        class="group flex justify-center items-center px-4 py-2 rounded-xl border-2 border-stone-500 cursor-pointer"
+      >
+        <svg
+          class="size-6 fill-pink-500/70 shrink-0"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+          <g
+            id="SVGRepo_tracerCarrier"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          ></g>
+          <g id="SVGRepo_iconCarrier">
+            <path
+              d="M15.7997 2.21048C15.3897 1.80048 14.6797 2.08048 14.6797 2.65048V6.14048C14.6797 7.60048 15.9197 8.81048 17.4297 8.81048C18.3797 8.82048 19.6997 8.82048 20.8297 8.82048C21.3997 8.82048 21.6997 8.15048 21.2997 7.75048C19.8597 6.30048 17.2797 3.69048 15.7997 2.21048Z"
+            ></path>
+            <path
+              d="M20.5 10.19H17.61C15.24 10.19 13.31 8.26 13.31 5.89V3C13.31 2.45 12.86 2 12.31 2H8.07C4.99 2 2.5 4 2.5 7.57V16.43C2.5 20 4.99 22 8.07 22H15.93C19.01 22 21.5 20 21.5 16.43V11.19C21.5 10.64 21.05 10.19 20.5 10.19ZM11.5 17.75H7.5C7.09 17.75 6.75 17.41 6.75 17C6.75 16.59 7.09 16.25 7.5 16.25H11.5C11.91 16.25 12.25 16.59 12.25 17C12.25 17.41 11.91 17.75 11.5 17.75ZM13.5 13.75H7.5C7.09 13.75 6.75 13.41 6.75 13C6.75 12.59 7.09 12.25 7.5 12.25H13.5C13.91 12.25 14.25 12.59 14.25 13C14.25 13.41 13.91 13.75 13.5 13.75Z"
+            ></path>
+          </g>
+        </svg>
+        <span class="text-sm pl-2 text-stone-400 group-hover:underline"
+          >원본 코드 보기</span
+        >
+      </button>
+      <section class="flex justify-center items-center size-full gap-8">
+        <div
+          class="flex justify-center items-center rounded-lg border-2 border-stone-500 w-5/12 h-11/12"
+        >
+          <code></code>
+        </div>
+        <div
+          class="flex justify-center items-center rounded-lg border-2 border-stone-500 w-5/12 h-11/12"
+        >
+          <p></p>
+        </div>
+      </section>
+    </main>
   </div>
+
+  <UploadedFileModal
+    v-if="submittedSource"
+    :is-open="isSourceModalOpen"
+    @close="closeSourceModal"
+    :file="submittedSource"
+  />
 </template>
