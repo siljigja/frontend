@@ -17,7 +17,7 @@ const isSignedIn = inject("is-signed-in");
     >
     <div v-if="isSignedIn" class="flex items-center gap-x-4 sm:gap-x-8">
       <RouterLink
-        class="group flex cursor-pointer rounded-xl outline-1 outline-transparent px-3 py-2 sm:px-4 sm:py-2.5 transition duration-200 ease-in-out hover:outline-stone-400"
+        class="group flex cursor-pointer rounded-xl border border-transparent px-3 py-2 sm:px-4 sm:py-2.5 transition duration-200 ease-in-out hover:border-stone-400"
         to="/analysis"
       >
         <span
@@ -27,7 +27,7 @@ const isSignedIn = inject("is-signed-in");
         >
       </RouterLink>
       <RouterLink
-        class="size-12 cursor-pointer rounded-full bg-stone-500 border-2 border-transparent transition duration-200 ease-in-out hover:border-stone-400"
+        class="size-12 cursor-pointer rounded-full bg-stone-500 border border-transparent transition duration-200 ease-in-out hover:border-stone-400"
         title="프로필 보기"
         to="/profile"
       >
@@ -36,7 +36,7 @@ const isSignedIn = inject("is-signed-in");
     </div>
     <div v-else class="flex items-center gap-x-4 sm:gap-x-8">
       <RouterLink
-        class="group flex cursor-pointer rounded-xl outline-1 outline-transparent px-3 py-2 sm:px-4 sm:py-2.5 transition duration-200 ease-in-out hover:outline-stone-400"
+        class="group flex cursor-pointer rounded-xl border border-transparent px-3 py-2 sm:px-4 sm:py-2.5 transition duration-200 ease-in-out hover:border-stone-400"
         title="로그인"
         to="/sign-in"
       >

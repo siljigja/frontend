@@ -1,20 +1,35 @@
 <script setup>
-import { RouterLink, onBeforeRouteLeave } from "vue-router";
+import { onBeforeRouteLeave } from "vue-router";
 import { ref, onMounted, onBeforeUnmount, watch, computed } from "vue";
 import Navbar from "@/components/Navbar.vue";
 import UploadedFile from "@/components/UploadedFile.vue";
 import UploadedFileModal from "@/components/UploadedFileModal.vue";
 import mockResponse from "@/mock_response.json";
+
+// PrismJS
 import Prism from "prismjs";
-
 import "prismjs/themes/prism-tomorrow.css";
-import "prismjs/components/prism-javascript"; // Load JS support
+// 언어
+import "prismjs/themes/prism-tomorrow.css";
+import "prismjs/components/prism-javascript";
+import "prismjs/components/prism-typescript"; // tsx 포함
+import "prismjs/components/prism-python";
+import "prismjs/components/prism-markup"; // html, xml, svg
+import "prismjs/components/prism-css";
+import "prismjs/components/prism-json";
+import "prismjs/components/prism-c";
+import "prismjs/components/prism-cpp";
+import "prismjs/components/prism-go";
+import "prismjs/components/prism-bash";
+import "prismjs/components/prism-yaml";
 
-// --- JSON 예시 데이터 ---
+// 예시 데이터
 const MOCK_RESPONSE = mockResponse;
 
+// 상태
 const isFirstInput = ref(true);
 const awaitingResponse = ref(false);
+const isCopied = ref(false);
 
 const loadingTexts = [
   "보안 약점 분석 중.",
@@ -25,10 +40,16 @@ const loadingMsgIndex = ref(0);
 const loadingText = ref(loadingTexts[0]);
 let loadingInterval = null;
 
-// Result Display State
 const analysisResult = ref(null);
 const currentIssueIndex = ref(0);
 
+const files = ref([]);
+const message = ref("");
+const fileInputRef = ref(null);
+const submittedSource = ref(null);
+const isSourceModalOpen = ref(false);
+
+// 로딩 애니메이션
 const startLoadingAnimation = () => {
   if (loadingInterval) clearInterval(loadingInterval);
   loadingInterval = setInterval(() => {
@@ -44,12 +65,7 @@ const stopLoadingAnimation = () => {
   }
 };
 
-const files = ref([]);
-const message = ref("");
-const fileInputRef = ref(null);
-const submittedSource = ref(null);
-const isSourceModalOpen = ref(false);
-
+// 모달
 const openSourceModal = () => {
   isSourceModalOpen.value = true;
 };
@@ -57,10 +73,11 @@ const closeSourceModal = () => {
   isSourceModalOpen.value = false;
 };
 
+// 입력 처리
 const placeholderText = computed(() => {
   if (files.value.length > 0)
     return "파일이 업로드되었습니다. 분석을 시작하세요.";
-  return "코드 파일을 업로드하거나 여기에 입력하세요";
+  return "코드 파일을 업로드하거나 직접 입력하세요.";
 });
 
 watch(message, (newMessage) => {
@@ -112,9 +129,8 @@ const handleSubmit = () => {
       };
     }
 
-    // AI 응답 시뮬레이션
+    // ! 실제 API 대신 예시 응답 사용
     setTimeout(() => {
-      // 예시 응답 불러오기
       analysisResult.value = MOCK_RESPONSE;
       currentIssueIndex.value = 0;
 
@@ -124,24 +140,66 @@ const handleSubmit = () => {
   }
 };
 
-// --- Result Logic ---
+// 결과 처리
+
+const getLanguage = (fileName) => {
+  if (!fileName) return "plaintext";
+  const parts = fileName.split(".");
+  if (parts.length > 1) {
+    const ext = parts.pop().toLowerCase();
+    const map = {
+      js: "javascript",
+      ts: "typescript",
+      jsx: "javascript",
+      tsx: "typescript",
+      py: "python",
+      java: "java",
+      c: "c",
+      cpp: "cpp",
+      cs: "csharp",
+      go: "go",
+      html: "markup",
+      css: "css",
+      json: "json",
+      yaml: "yaml",
+      vue: "markup",
+      sh: "bash",
+      md: "markdown",
+    };
+    return map[ext] || "plaintext";
+  }
+  return "plaintext";
+};
 
 const currentIssue = computed(() => {
   if (!analysisResult.value || !analysisResult.value.issues) return null;
   return analysisResult.value.issues[currentIssueIndex.value];
 });
 
-// Computed property for syntax highlighting
 const highlightedCode = computed(() => {
   if (!currentIssue.value || !currentIssue.value.fix_code) return "";
-  // Hardcoded to javascript for this demo.
-  // In a real app, you'd check submittedSource.value.name extension.
-  return Prism.highlight(
-    currentIssue.value.fix_code,
-    Prism.languages.javascript,
-    "javascript"
-  );
+
+  const fileName = submittedSource.value?.name || "code.js";
+  const langAlias = getLanguage(fileName);
+  const grammar = Prism.languages[langAlias];
+
+  return grammar
+    ? Prism.highlight(currentIssue.value.fix_code, grammar, langAlias)
+    : Prism.util.encode(currentIssue.value.fix_code);
 });
+
+const handleCopyCode = async () => {
+  if (!currentIssue.value?.fix_code) return;
+  try {
+    await navigator.clipboard.writeText(currentIssue.value.fix_code);
+    isCopied.value = true;
+    setTimeout(() => {
+      isCopied.value = false;
+    }, 2000);
+  } catch (err) {
+    console.error("코드 복사 실패", err);
+  }
+};
 
 const nextIssue = () => {
   if (
@@ -158,16 +216,14 @@ const prevIssue = () => {
   }
 };
 
-// --- Navigation Guard ---
 const hasUnsavedData = computed(() => {
-  // Once analyzed (analysisResult exists), we allow navigation without warning
-  // because the "unsaved input" has technically been "saved/processed".
   return (
     (files.value.length > 0 || message.value.trim() !== "") &&
     !analysisResult.value
   );
 });
 
+// 페이지 이탈 방지
 onBeforeRouteLeave((to, from, next) => {
   if (hasUnsavedData.value) {
     const confirmed = window.confirm(
@@ -183,7 +239,7 @@ onBeforeRouteLeave((to, from, next) => {
 const handleBeforeUnload = (e) => {
   if (hasUnsavedData.value) {
     e.preventDefault();
-    return "페이지를 새로고침하시겠습니까? 데이터는 저장되지 않습니다.";
+    return "";
   }
 };
 
@@ -201,7 +257,7 @@ onBeforeUnmount(() => {
   <div class="flex flex-col justify-between items-center gap-6 h-screen">
     <Navbar />
 
-    <!-- 입력 -->
+    <!-- 1. 입력 -->
     <main
       v-if="isFirstInput"
       class="flex flex-col grow gap-16 justify-center items-center w-full h-full px-16"
@@ -250,7 +306,6 @@ onBeforeUnmount(() => {
 
       <form
         @submit.prevent="handleSubmit"
-        action=""
         class="flex items-center justify-between gap-4 w-full h-fit max-w-4xl min-w-96"
       >
         <div
@@ -334,7 +389,7 @@ onBeforeUnmount(() => {
       </form>
     </main>
 
-    <!-- 로딩 -->
+    <!-- 2. 로딩 -->
     <main
       v-else-if="awaitingResponse"
       class="flex flex-col justify-center items-center gap-6 h-full"
@@ -363,14 +418,14 @@ onBeforeUnmount(() => {
       <span class="text-lg animate-pulse">{{ loadingText }}</span>
     </main>
 
-    <!-- 결과 -->
+    <!-- 3. 결과 -->
     <main
       v-else-if="!awaitingResponse && !isFirstInput && currentIssue"
       class="flex flex-col justify-start items-center size-full gap-2 pt-4 pb-8 overflow-hidden"
     >
       <button
         @click="openSourceModal"
-        class="group flex justify-center items-center px-4 py-2 rounded-xl border-2 border-stone-500 cursor-pointer mb-4"
+        class="group flex justify-center items-center px-4 py-2 rounded-xl border border-stone-500 cursor-pointer mb-4"
       >
         <svg
           class="size-5 fill-stone-500 shrink-0"
@@ -405,26 +460,60 @@ onBeforeUnmount(() => {
       >
         <!-- 왼쪽: 수정된 코드 -->
         <div
-          class="flex flex-col rounded-xl border-2 border-stone-500 w-5/12 h-full overflow-hidden"
-          title="클립보드에 복사"
+          class="group flex flex-col rounded-xl border border-stone-500 w-5/12 h-full overflow-hidden relative"
+          title="수정된 코드"
         >
           <div
-            class="bg-stone-900 px-4 py-2 border-b border-stone-500 text-sm text-stone-400"
+            class="flex items-center justify-between bg-stone-900 px-4 py-2 border-b border-stone-500 text-sm h-11"
           >
-            수정된 코드 (클릭해서 복사)
+            <span class="text-stone-400 font-medium">수정된 코드 (Fixed)</span>
+            <span
+              v-if="isCopied"
+              class="flex items-center gap-2 text-xs text-stone-400 uppercase cursor-default"
+              title="복사 완료"
+              ><svg
+                class="size-4 fill-stone-400"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                <g
+                  id="SVGRepo_tracerCarrier"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                ></g>
+                <g id="SVGRepo_iconCarrier">
+                  <path
+                    d="M14.3498 2H9.64977C8.60977 2 7.75977 2.84 7.75977 3.88V4.82C7.75977 5.86 8.59977 6.7 9.63977 6.7H14.3498C15.3898 6.7 16.2298 5.86 16.2298 4.82V3.88C16.2398 2.84 15.3898 2 14.3498 2Z"
+                  ></path>
+                  <path
+                    d="M17.2391 4.81949C17.2391 6.40949 15.9391 7.70949 14.3491 7.70949H9.64906C8.05906 7.70949 6.75906 6.40949 6.75906 4.81949C6.75906 4.25949 6.15906 3.90949 5.65906 4.16949C4.24906 4.91949 3.28906 6.40949 3.28906 8.11949V17.5295C3.28906 19.9895 5.29906 21.9995 7.75906 21.9995H16.2391C18.6991 21.9995 20.7091 19.9895 20.7091 17.5295V8.11949C20.7091 6.40949 19.7491 4.91949 18.3391 4.16949C17.8391 3.90949 17.2391 4.25949 17.2391 4.81949ZM15.3391 12.7295L11.3391 16.7295C11.1891 16.8795 10.9991 16.9495 10.8091 16.9495C10.6191 16.9495 10.4291 16.8795 10.2791 16.7295L8.77906 15.2295C8.48906 14.9395 8.48906 14.4595 8.77906 14.1695C9.06906 13.8795 9.54906 13.8795 9.83906 14.1695L10.8091 15.1395L14.2791 11.6695C14.5691 11.3795 15.0491 11.3795 15.3391 11.6695C15.6291 11.9595 15.6291 12.4395 15.3391 12.7295Z"
+                  ></path>
+                </g></svg
+              >Copied to Clipboard</span
+            >
+            <span
+              v-else
+              @click="handleCopyCode"
+              class="text-xs text-stone-500 uppercase hover:underline group-hover:text-stone-400 cursor-pointer"
+              title="클릭해서 복사"
+              >Click to Copy</span
+            >
           </div>
+
           <pre
             class="scrollbar-thin scrollbar-thumb-stone-600 scrollbar-track-stone-800 overflow-auto h-full p-4 m-0 text-sm"
-          ><code v-html="highlightedCode" class="language-javascript"></code></pre>
+          ><code v-html="highlightedCode" :class="`language-${getLanguage(submittedSource?.name)}`"></code></pre>
         </div>
 
         <!-- 오른쪽: 설명 -->
         <div
-          class="flex flex-col rounded-xl border-2 border-stone-500 w-5/12 h-full overflow-hidden"
+          class="flex flex-col rounded-xl border border-stone-500 w-5/12 h-full overflow-hidden"
         >
           <!-- 헤더 & 내비게이션 -->
           <div
-            class="flex justify-between items-center bg-stone-900 px-4 py-2 border-b border-stone-500"
+            class="flex justify-between items-center bg-stone-900 px-4 py-2 border-b border-stone-500 h-11"
           >
             <div class="text-sm text-stone-400">
               발견된 취약점 {{ currentIssueIndex + 1 }} /
@@ -455,8 +544,9 @@ onBeforeUnmount(() => {
             class="flex flex-col p-6 gap-6 overflow-y-auto scrollbar-thin scrollbar-thumb-stone-600"
           >
             <div>
-              <span class="text-stone-400 text-xs uppercase tracking-wider"
-                >Vulnerability Name</span
+              <span
+                class="text-stone-500 text-xs font-bold uppercase tracking-wider"
+                >Vulnerability</span
               >
               <h2 class="text-xl font-bold text-stone-200 mt-1">
                 {{ currentIssue.name }}
@@ -465,7 +555,7 @@ onBeforeUnmount(() => {
 
             <div class="flex gap-4 items-center">
               <span
-                class="px-3 py-1 rounded-full text-sm font-semibold uppercase text-white border-2"
+                class="px-3 py-1 rounded-full text-sm font-semibold uppercase border-2 text-white"
                 :style="{
                   borderColor,
                   color: currentIssue.display_meta.severity_color || '#666',
@@ -480,7 +570,8 @@ onBeforeUnmount(() => {
             </div>
 
             <div class="border-t border-stone-700 pt-4">
-              <span class="text-stone-400 text-xs uppercase tracking-wider"
+              <span
+                class="text-stone-500 text-xs font-bold uppercase tracking-wider"
                 >Description & Analysis</span
               >
               <p
@@ -522,7 +613,7 @@ pre[class*="language-"] {
   background-color: oklch(21.6% 0.006 56.043) !important; /* stone-900 */
   text-shadow: none !important;
   font-family: Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .scrollbar-thin::-webkit-scrollbar {
