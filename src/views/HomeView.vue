@@ -11,7 +11,7 @@ const isSignedIn = inject("is-signed-in");
     <main
       class="flex flex-col items-center justify-between w-full h-full max-w-6xl px-4 md:px-8"
     >
-      <div class="flex items-start justify-between w-full h-fit gap-6">
+      <div class="flex items-center justify-between w-full h-fit gap-6">
         <div class="flex flex-col w-auto h-fit gap-4 sm:gap-8">
           <svg
             class="size-10 sm:size-16 fill-stone-500"
@@ -41,11 +41,11 @@ const isSignedIn = inject("is-signed-in");
           </p>
         </div>
 
-        <p class="w-1/3 h-fit max-w-lg text-sm md:text-base">
-          프로젝트 기능 설명 Lorem ipsum dolor sit amet consectetur. Faucibus
-          volutpat elit sed lacinia. Justo imperdiet ullamcorper est at
-          malesuada. Aliquam sagittis at mauris sit ut ultrices lacus blandit
-          risus. Ultrices suscipit diam orci tempus ac.
+        <p class="w-1/3 h-fit max-w-lg text-sm md:text-base text-center">
+          defAPI는 AI 기반 코드 분석을 통해<br />
+          사용자의 코드의 보안 취약점을 자동으로 탐지하고<br />
+          각 취약점에 대한 설명과 수정된 코드가 포함된<br />
+          리포트를 생성하는 웹 서비스입니다.
         </p>
       </div>
 
@@ -106,12 +106,13 @@ const isSignedIn = inject("is-signed-in");
 
       <RouterLink
         v-if="isSignedIn"
-        class="w-full max-w-5xl h-fit cursor-pointer rounded-t-3xl transition duration-200 ease-in-out shadow-[0_0_15px_5px]/40 shadow-stone-400/50 hover:shadow-[0_0_20px_6px]/70 hover:shadow-pink-500/50"
+        class="w-full max-w-5xl h-fit cursor-pointer rounded-t-3xl shadow-[0_0_15px_5px]/40 shadow-stone-400/50 hover:shadow-[0_0_20px_6px]/70 hover:shadow-pink-500/50"
         to="/analysis"
         title="취약점 분석 시작"
       >
+        <!-- Preview -->
         <section
-          class="flex flex-col items-center justify-end w-full h-fit gap-10 md:gap-16 rounded-t-3xl border-2 border-b-0 border-stone-500 py-12 sm:py-16 md:py-20 px-36"
+          class="flex flex-col items-center justify-end w-full h-fit gap-8 md:gap-12 rounded-t-3xl border border-b-0 border-stone-500 py-12 sm:py-16 md:py-20 px-36"
         >
           <svg
             class="size-16 sm:size-24 fill-stone-500"
@@ -136,60 +137,157 @@ const isSignedIn = inject("is-signed-in");
           </svg>
 
           <div
-            class="flex items-center justify-between w-full h-14 sm:h-16 min-w-96 rounded-full border-2 border-stone-500 px-5 sm:px-7"
+            class="flex flex-col items-center justify-center gap-4 w-lg h-fit rounded-xl p-4"
           >
-            <input
-              type="text"
-              placeholder="코드 파일을 업로드하거나 직접 입력하세요"
-              class="full-width-input w-full h-fit bg-transparent text-base placeholder:text-stone-500 focus:outline-none cursor-pointer"
-              disabled
-            />
+            <div
+              class="flex justify-center items-center w-full sm:justify-between"
+            >
+              <div class="max-h-48 hidden sm:block">
+                <div
+                  class="flex items-center p-2 border-2 border-stone-500 rounded-xl max-w-xs"
+                >
+                  <svg
+                    class="size-5 fill-pink-500/50 mr-2 shrink-0"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                    <g
+                      id="SVGRepo_tracerCarrier"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    ></g>
+                    <g id="SVGRepo_iconCarrier">
+                      <path
+                        d="M15.7997 2.21048C15.3897 1.80048 14.6797 2.08048 14.6797 2.65048V6.14048C14.6797 7.60048 15.9197 8.81048 17.4297 8.81048C18.3797 8.82048 19.6997 8.82048 20.8297 8.82048C21.3997 8.82048 21.6997 8.15048 21.2997 7.75048C19.8597 6.30048 17.2797 3.69048 15.7997 2.21048Z"
+                      ></path>
+                      <path
+                        d="M20.5 10.19H17.61C15.24 10.19 13.31 8.26 13.31 5.89V3C13.31 2.45 12.86 2 12.31 2H8.07C4.99 2 2.5 4 2.5 7.57V16.43C2.5 20 4.99 22 8.07 22H15.93C19.01 22 21.5 20 21.5 16.43V11.19C21.5 10.64 21.05 10.19 20.5 10.19ZM11.5 17.75H7.5C7.09 17.75 6.75 17.41 6.75 17C6.75 16.59 7.09 16.25 7.5 16.25H11.5C11.91 16.25 12.25 16.59 12.25 17C12.25 17.41 11.91 17.75 11.5 17.75ZM13.5 13.75H7.5C7.09 13.75 6.75 13.41 6.75 13C6.75 12.59 7.09 12.25 7.5 12.25H13.5C13.91 12.25 14.25 12.59 14.25 13C14.25 13.41 13.91 13.75 13.5 13.75Z"
+                      ></path>
+                    </g>
+                  </svg>
+                  <div class="flex flex-col grow min-w-0">
+                    <span
+                      class="text-sm font-medium truncate block text-stone-400"
+                    >
+                      index.js
+                    </span>
+                    <span class="text-xs text-stone-500">13.1 KB </span>
+                  </div>
 
-            <div class="flex shrink-0 w-fit h-fit gap-3">
-              <svg
-                class="size-6 fill-stone-500 transition duration-150"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+                  <div class="group ml-2 p-2 rounded-full flex shrink-0">
+                    <svg
+                      class="size-4 fill-stone-500 group-hover:fill-stone-400 transition duration-200 ease-in-out"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="flex justify-center items-center shrink-0 w-fit h-fit gap-3"
               >
-                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                <g
-                  id="SVGRepo_tracerCarrier"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                ></g>
-                <g id="SVGRepo_iconCarrier">
-                  <path
-                    d="M20.5 10.19H17.61C15.24 10.19 13.31 8.26 13.31 5.89V3C13.31 2.45 12.86 2 12.31 2H8.07C4.99 2 2.5 4 2.5 7.57V16.43C2.5 20 4.99 22 8.07 22H15.93C19.01 22 21.5 20 21.5 16.43V11.19C21.5 10.64 21.05 10.19 20.5 10.19ZM11.53 13.53C11.38 13.68 11.19 13.75 11 13.75C10.81 13.75 10.62 13.68 10.47 13.53L9.75 12.81V17C9.75 17.41 9.41 17.75 9 17.75C8.59 17.75 8.25 17.41 8.25 17V12.81L7.53 13.53C7.24 13.82 6.76 13.82 6.47 13.53C6.18 13.24 6.18 12.76 6.47 12.47L8.47 10.47C8.54 10.41 8.61 10.36 8.69 10.32C8.71 10.31 8.74 10.3 8.76 10.29C8.82 10.27 8.88 10.26 8.95 10.25C8.98 10.25 9 10.25 9.03 10.25C9.11 10.25 9.19 10.27 9.27 10.3C9.28 10.3 9.28 10.3 9.29 10.3C9.37 10.33 9.45 10.39 9.51 10.45C9.52 10.46 9.53 10.46 9.53 10.47L11.53 12.47C11.82 12.76 11.82 13.24 11.53 13.53Z"
-                  ></path>
-                  <path
-                    d="M17.4297 8.81048C18.3797 8.82048 19.6997 8.82048 20.8297 8.82048C21.3997 8.82048 21.6997 8.15048 21.2997 7.75048C19.8597 6.30048 17.2797 3.69048 15.7997 2.21048C15.3897 1.80048 14.6797 2.08048 14.6797 2.65048V6.14048C14.6797 7.60048 15.9197 8.81048 17.4297 8.81048Z"
-                  ></path>
-                </g>
-              </svg>
-              <svg
-                class="size-6 fill-stone-500 transition duration-150"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                <g
-                  id="SVGRepo_tracerCarrier"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                ></g>
-                <g id="SVGRepo_iconCarrier">
-                  <path
-                    d="M16.1391 2.95907L7.10914 5.95907C1.03914 7.98907 1.03914 11.2991 7.10914 13.3191L9.78914 14.2091L10.6791 16.8891C12.6991 22.9591 16.0191 22.9591 18.0391 16.8891L21.0491 7.86907C22.3891 3.81907 20.1891 1.60907 16.1391 2.95907ZM16.4591 8.33907L12.6591 12.1591C12.5091 12.3091 12.3191 12.3791 12.1291 12.3791C11.9391 12.3791 11.7491 12.3091 11.5991 12.1591C11.3091 11.8691 11.3091 11.3891 11.5991 11.0991L15.3991 7.27907C15.6891 6.98907 16.1691 6.98907 16.4591 7.27907C16.7491 7.56907 16.7491 8.04907 16.4591 8.33907Z"
-                  ></path>
-                </g>
-              </svg>
+                <div class="flex rounded-xl border border-stone-500">
+                  <div>
+                    <div
+                      class="group flex justify-center items-center gap-2 px-2.5 py-2 text-stone-400 rounded-xl rounded-r-none border-r border-stone-500 underline bg-stone-800"
+                    >
+                      <svg
+                        class="size-6 fill-stone-400"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                        <g
+                          id="SVGRepo_tracerCarrier"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        ></g>
+                        <g id="SVGRepo_iconCarrier">
+                          <path
+                            d="M20.5 10.19H17.61C15.24 10.19 13.31 8.26 13.31 5.89V3C13.31 2.45 12.86 2 12.31 2H8.07C4.99 2 2.5 4 2.5 7.57V16.43C2.5 20 4.99 22 8.07 22H15.93C19.01 22 21.5 20 21.5 16.43V11.19C21.5 10.64 21.05 10.19 20.5 10.19ZM11.53 13.53C11.38 13.68 11.19 13.75 11 13.75C10.81 13.75 10.62 13.68 10.47 13.53L9.75 12.81V17C9.75 17.41 9.41 17.75 9.00 17.75C8.59 17.75 8.25 17.41 8.25 17V12.81L7.53 13.53C7.24 13.82 6.76 13.82 6.47 13.53C6.18 13.24 6.18 12.76 6.47 12.47L8.47 10.47C8.54 10.41 8.61 10.36 8.69 10.32C8.71 10.31 8.74 10.3 8.76 10.29C8.82 10.27 8.88 10.26 8.95 10.25C8.98 10.25 9 10.25 9.03 10.25C9.11 10.25 9.19 10.27 9.27 10.3C9.28 10.3 9.28 10.3 9.29 10.3C9.37 10.33 9.45 10.39 9.51 10.45C9.52 10.46 9.53 10.46 9.53 10.47L11.53 12.47C11.82 12.76 11.82 13.24 11.53 13.53Z"
+                          ></path>
+                          <path
+                            d="M17.4297 8.81048C18.3797 8.82048 19.6997 8.82048 20.8297 8.82048C21.3997 8.82048 21.6997 8.15048 21.2997 7.75048C19.8597 6.30048 17.2797 3.69048 15.7997 2.21048C15.3897 1.80048 14.6797 2.08048 14.6797 2.65048V6.14048C14.6797 7.60048 15.9197 8.81048 17.4297 8.81048Z"
+                          ></path>
+                        </g>
+                      </svg>
+                      <span class="text-sm group-hover:underline">Upload</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div
+                      for="write"
+                      class="group flex justify-center items-center gap-2 px-2.5 py-2 text-stone-400 rounded-xl rounded-l-none border-l border-stone-500"
+                    >
+                      <svg
+                        class="size-6 fill-stone-400"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                        <g
+                          id="SVGRepo_tracerCarrier"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        ></g>
+                        <g id="SVGRepo_iconCarrier">
+                          <path
+                            d="M21 22H3C2.59 22 2.25 21.66 2.25 21.25C2.25 20.84 2.59 20.5 3 20.5H21C21.41 20.5 21.75 20.84 21.75 21.25C21.75 21.66 21.41 22 21 22Z"
+                          ></path>
+                          <path
+                            d="M19.0206 3.48162C17.0806 1.54162 15.1806 1.49162 13.1906 3.48162L11.9806 4.69162C11.8806 4.79162 11.8406 4.95162 11.8806 5.09162C12.6406 7.74162 14.7606 9.86162 17.4106 10.6216C17.4506 10.6316 17.4906 10.6416 17.5306 10.6416C17.6406 10.6416 17.7406 10.6016 17.8206 10.5216L19.0206 9.31162C20.0106 8.33162 20.4906 7.38162 20.4906 6.42162C20.5006 5.43162 20.0206 4.47162 19.0206 3.48162Z"
+                          ></path>
+                          <path
+                            d="M15.6103 11.5308C15.3203 11.3908 15.0403 11.2508 14.7703 11.0908C14.5503 10.9608 14.3403 10.8208 14.1303 10.6708C13.9603 10.5608 13.7603 10.4008 13.5703 10.2408C13.5503 10.2308 13.4803 10.1708 13.4003 10.0908C13.0703 9.81078 12.7003 9.45078 12.3703 9.05078C12.3403 9.03078 12.2903 8.96078 12.2203 8.87078C12.1203 8.75078 11.9503 8.55078 11.8003 8.32078C11.6803 8.17078 11.5403 7.95078 11.4103 7.73078C11.2503 7.46078 11.1103 7.19078 10.9703 6.91078C10.9491 6.86539 10.9286 6.82022 10.9088 6.77532C10.7612 6.442 10.3265 6.34455 10.0688 6.60231L4.34032 12.3308C4.21032 12.4608 4.09032 12.7108 4.06032 12.8808L3.52032 16.7108C3.42032 17.3908 3.61032 18.0308 4.03032 18.4608C4.39032 18.8108 4.89032 19.0008 5.43032 19.0008C5.55032 19.0008 5.67032 18.9908 5.79032 18.9708L9.63032 18.4308C9.81032 18.4008 10.0603 18.2808 10.1803 18.1508L15.9016 12.4295C16.1612 12.1699 16.0633 11.7245 15.7257 11.5804C15.6877 11.5642 15.6492 11.5476 15.6103 11.5308Z"
+                          ></path>
+                        </g>
+                      </svg>
+                      <span class="text-sm">Write</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  class="group flex justify-center items-center border border-stone-500 p-2 rounded-xl"
+                >
+                  <svg
+                    class="size-8 fill-stone-500"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                    <g
+                      id="SVGRepo_tracerCarrier"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    ></g>
+                    <g id="SVGRepo_iconCarrier">
+                      <path
+                        d="M16.1391 2.95907L7.10914 5.95907C1.03914 7.98907 1.03914 11.2991 7.10914 13.3191L9.78914 14.2091L10.6791 16.8891C12.6991 22.9591 16.0191 22.9591 18.0391 16.8891L21.0491 7.86907C22.3891 3.81907 20.1891 1.60907 16.1391 2.95907ZM16.4591 8.33907L12.6591 12.1591C12.5091 12.3091 12.3191 12.3791 12.1291 12.3791C11.9391 12.3791 11.7491 12.3091 11.5991 12.1591C11.3091 11.8691 11.3091 11.3891 11.5991 11.0991L15.3991 7.27907C15.6891 6.98907 16.1691 6.98907 16.4591 7.27907C16.7491 7.56907 16.7491 8.04907 16.4591 8.33907Z"
+                      ></path>
+                    </g>
+                  </svg>
+                </div>
+              </div>
             </div>
           </div>
         </section>
       </RouterLink>
-      <div v-else class="w-full max-w-5xl h-fit cursor-not-allowed">
+      <!-- div v-else class="w-full max-w-5xl h-fit cursor-not-allowed">
         <section
           class="flex flex-col items-center justify-end w-full h-fit gap-10 md:gap-16 rounded-t-3xl border-2 border-b-0 border-stone-400 bg-stone-800 py-12 sm:py-16 md:py-20 px-36"
         >
@@ -268,7 +366,7 @@ const isSignedIn = inject("is-signed-in");
             </div>
           </div>
         </section>
-      </div>
+      </div -->
     </main>
   </div>
 </template>

@@ -4,9 +4,12 @@ import { ref, onMounted, onBeforeUnmount, watch, computed } from "vue";
 import Navbar from "@/components/Navbar.vue";
 import UploadedFile from "@/components/UploadedFile.vue";
 import UploadedFileModal from "@/components/UploadedFileModal.vue";
+import CodeInputModal from "@/components/CodeInputModal.vue";
 
+// ==================================================
 // JSON 응답 예시, 백엔드 연동시 제거
 import mockResponse from "@/mock_response.json";
+// ==================================================
 
 // PrismJS
 import Prism from "prismjs";
@@ -25,13 +28,16 @@ import "prismjs/components/prism-go";
 import "prismjs/components/prism-bash";
 import "prismjs/components/prism-yaml";
 
-// JSON 응답 예시 변수
+// ========================================
+// JSON 응답 예시 변수, 백엔드 연동시 제거
 const MOCK_RESPONSE = mockResponse;
+// ========================================
 
 // 상태
 const isFirstInput = ref(true);
 const awaitingResponse = ref(false);
 const isCopied = ref(false);
+const inputType = ref("upload");
 
 const loadingTexts = [
   "보안 약점 분석 중.",
@@ -50,6 +56,7 @@ const message = ref("");
 const fileInputRef = ref(null);
 const submittedSource = ref(null);
 const isSourceModalOpen = ref(false);
+const isCodeInputModalOpen = ref(false);
 
 // 로딩 애니메이션
 const startLoadingAnimation = () => {
@@ -75,14 +82,22 @@ const closeSourceModal = () => {
   isSourceModalOpen.value = false;
 };
 
-// 입력 처리
-const placeholderText = computed(() => {
-  if (files.value.length > 0)
-    return "파일이 업로드되었습니다. 분석을 시작하세요.";
-  return "코드 파일을 업로드하거나 직접 입력하세요.";
-});
+// 코드 입력 모달
+const openCodeInputModal = () => {
+  isCodeInputModalOpen.value = true;
+};
+const closeCodeInputModal = () => {
+  isCodeInputModalOpen.value = false;
+};
 
+// 입력 타입 선택
+const selectInputType = (type) => {
+  inputType.value = type;
+};
+
+// 입력 처리
 watch(message, (newMessage) => {
+  // Typed message clears file input for mutual exclusivity
   if (newMessage.trim() !== "") files.value = [];
 });
 
@@ -105,7 +120,6 @@ const handleFileChange = (e) => {
     type: newFile.type,
   };
   files.value = [newFileObject];
-  message.value = "";
   if (e.target) e.target.value = null;
 };
 
@@ -116,6 +130,7 @@ const removeFile = (idToRemove) => {
 // 제출 처리
 // ==================================================
 // 백엔드 연동시 여기 코드 수정 필요
+// 수정: inputType에 따라 정확한 소스를 제출하도록 로직 변경
 // ==================================================
 const handleSubmit = () => {
   if (files.value.length > 0 || message.value.trim() !== "") {
@@ -124,25 +139,33 @@ const handleSubmit = () => {
     awaitingResponse.value = true;
     startLoadingAnimation();
 
-    if (files.value.length > 0) {
+    // 입력 타입에 따라 제출 소스 결정
+    if (inputType.value === "upload") {
+      // 파일 업로드 모드
       submittedSource.value = files.value[0];
-    } else {
+    } else if (inputType.value === "write") {
+      // 코드 작성 모드
       submittedSource.value = {
-        name: "code.txt",
-        file: new File([message.value], "TypedInput.txt", {
+        name: "TypedCodeInput.txt", // 변경: TypedInput.txt 대신 명확한 이름 사용
+        file: new File([message.value], "TypedCodeInput.txt", {
           type: "text/plain",
         }),
         size: new Blob([message.value]).size,
       };
+    } else {
+      awaitingResponse.value = false;
+      stopLoadingAnimation();
+      isFirstInput.value = true;
+      return;
     }
 
     // setTimeout은 백엔드 연동시 제거
-    // 결과 나왔을 때 awaitingResponse.value = false; stopLoadingAnimation(); 실행 필요
     setTimeout(() => {
-      // Mock response for analysis result
+      // 예시 응답 사용, 백엔드 연동시 제거
       analysisResult.value = MOCK_RESPONSE;
       currentIssueIndex.value = 0;
 
+      // 결과 나왔을 때 awaitingResponse.value = false, stopLoadingAnimation() 실행 필요
       awaitingResponse.value = false;
       stopLoadingAnimation();
     }, 3000);
@@ -240,18 +263,17 @@ const nextIssue = () => {
     currentIssueIndex.value++;
   }
 };
-
 const prevIssue = () => {
   if (currentIssueIndex.value > 0) {
     currentIssueIndex.value--;
   }
 };
 
+// 페이지 이탈 경고
 const hasUnsavedData = computed(() => {
   return files.value.length > 0 || message.value.trim() !== "";
 });
 
-// 페이지 이탈 방지
 onBeforeRouteLeave((to, from, next) => {
   if (hasUnsavedData.value) {
     // 추후 window.confirm 대신 커스텀 모달로 변경 가능
@@ -275,7 +297,6 @@ const handleBeforeUnload = (e) => {
 onMounted(() => {
   window.addEventListener("beforeunload", handleBeforeUnload);
 });
-
 onBeforeUnmount(() => {
   window.removeEventListener("beforeunload", handleBeforeUnload);
   stopLoadingAnimation();
@@ -313,88 +334,114 @@ onBeforeUnmount(() => {
         </g>
       </svg>
 
-      <div v-if="files.length > 0" class="w-full max-w-4xl min-w-96 -mb-16">
-        <div class="py-3 max-h-48 overflow-y-auto">
-          <h2 class="text-sm font-semibold text-stone-500 mb-2">
-            첨부된 파일:
-          </h2>
-          <div class="flex flex-wrap gap-2">
-            <div class="flex flex-wrap gap-2">
-              <UploadedFile
-                v-for="file in files"
-                :key="file.id"
-                :file="file"
-                :formatFileSize="formatFileSize"
-                @remove="removeFile"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
       <form
         @submit.prevent="handleSubmit"
-        class="flex items-center justify-between gap-4 w-full h-fit max-w-4xl min-w-96"
+        class="flex flex-col items-end justify-center gap-4 w-fit h-fit max-w-4xl min-w-96 rounded-xl p-4"
       >
-        <div
-          class="flex items-center justify-between gap-4 w-full h-fit max-w-4xl min-w-96 rounded-full border-2 border-stone-500 py-5 px-5 sm:px-7 transition ease-in-out duration-200 focus-within:border-stone-400"
-        >
-          <input
-            v-model="message"
-            :placeholder="placeholderText"
-            type="text"
-            class="full-width-input w-full h-fit bg-transparent text-base text-stone-400 placeholder:text-stone-500 focus:outline-none disabled:cursor-not-allowed"
-            :disabled="files.length > 0"
-          />
-
-          <div class="flex shrink-0 w-fit h-fit gap-3">
-            <input
-              type="file"
-              accept=".js,.ts,.jsx,.tsx,.py,.java,.c,.cpp,.cs,.rb,.go,.php,.html,.css,.json,.xml,.yaml,.yml, .vue,.sh,.md"
-              id="file-upload"
-              class="hidden"
-              ref="fileInputRef"
-              @change="handleFileChange"
-              :disabled="message.trim() !== ''"
+        <div class="flex justify-between items-center w-full">
+          <div class="max-h-48 overflow-y-auto">
+            <UploadedFile
+              v-for="file in files"
+              :key="file.id"
+              :file="file"
+              :formatFileSize="formatFileSize"
+              @remove="removeFile"
             />
-            <label
-              for="file-upload"
-              title="코드 파일 업로드"
-              :class="{
-                'cursor-pointer hover:fill-stone-400': message.trim() === '',
-                'opacity-50 cursor-not-allowed': message.trim() !== '',
-              }"
-            >
-              <svg
-                class="size-6 fill-stone-500 transition duration-200 hover:fill-stone-400"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                <g
-                  id="SVGRepo_tracerCarrier"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                ></g>
-                <g id="SVGRepo_iconCarrier">
-                  <path
-                    d="M20.5 10.19H17.61C15.24 10.19 13.31 8.26 13.31 5.89V3C13.31 2.45 12.86 2 12.31 2H8.07C4.99 2 2.5 4 2.5 7.57V16.43C2.5 20 4.99 22 8.07 22H15.93C19.01 22 21.5 20 21.5 16.43V11.19C21.5 10.64 21.05 10.19 20.5 10.19ZM11.53 13.53C11.38 13.68 11.19 13.75 11 13.75C10.81 13.75 10.62 13.68 10.47 13.53L9.75 12.81V17C9.75 17.41 9.41 17.75 9.00 17.75C8.59 17.75 8.25 17.41 8.25 17V12.81L7.53 13.53C7.24 13.82 6.76 13.82 6.47 13.53C6.18 13.24 6.18 12.76 6.47 12.47L8.47 10.47C8.54 10.41 8.61 10.36 8.69 10.32C8.71 10.31 8.74 10.3 8.76 10.29C8.82 10.27 8.88 10.26 8.95 10.25C8.98 10.25 9 10.25 9.03 10.25C9.11 10.25 9.19 10.27 9.27 10.3C9.28 10.3 9.28 10.3 9.29 10.3C9.37 10.33 9.45 10.39 9.51 10.45C9.52 10.46 9.53 10.46 9.53 10.47L11.53 12.47C11.82 12.76 11.82 13.24 11.53 13.53Z"
-                  ></path>
-                  <path
-                    d="M17.4297 8.81048C18.3797 8.82048 19.6997 8.82048 20.8297 8.82048C21.3997 8.82048 21.6997 8.15048 21.2997 7.75048C19.8597 6.30048 17.2797 3.69048 15.7997 2.21048C15.3897 1.80048 14.6797 2.08048 14.6797 2.65048V6.14048C14.6797 7.60048 15.9197 8.81048 17.4297 8.81048Z"
-                  ></path>
-                </g>
-              </svg>
-            </label>
+          </div>
+
+          <div
+            class="flex justify-center items-center shrink-0 w-fit h-fit gap-3"
+          >
+            <div class="flex rounded-xl border border-stone-500">
+              <div>
+                <input
+                  @change="selectInputType('upload')"
+                  type="radio"
+                  id="upload"
+                  name="inputType"
+                  class="peer sr-only"
+                  checked
+                />
+                <label
+                  for="upload"
+                  title="코드 파일 업로드"
+                  class="group flex justify-center items-center gap-2 px-2.5 py-2 text-stone-400 cursor-pointer rounded-xl rounded-r-none border-r border-stone-500 peer-checked:underline peer-checked:bg-stone-800"
+                >
+                  <svg
+                    class="size-6 fill-stone-400"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                    <g
+                      id="SVGRepo_tracerCarrier"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    ></g>
+                    <g id="SVGRepo_iconCarrier">
+                      <path
+                        d="M20.5 10.19H17.61C15.24 10.19 13.31 8.26 13.31 5.89V3C13.31 2.45 12.86 2 12.31 2H8.07C4.99 2 2.5 4 2.5 7.57V16.43C2.5 20 4.99 22 8.07 22H15.93C19.01 22 21.5 20 21.5 16.43V11.19C21.5 10.64 21.05 10.19 20.5 10.19ZM11.53 13.53C11.38 13.68 11.19 13.75 11 13.75C10.81 13.75 10.62 13.68 10.47 13.53L9.75 12.81V17C9.75 17.41 9.41 17.75 9.00 17.75C8.59 17.75 8.25 17.41 8.25 17V12.81L7.53 13.53C7.24 13.82 6.76 13.82 6.47 13.53C6.18 13.24 6.18 12.76 6.47 12.47L8.47 10.47C8.54 10.41 8.61 10.36 8.69 10.32C8.71 10.31 8.74 10.3 8.76 10.29C8.82 10.27 8.88 10.26 8.95 10.25C8.98 10.25 9 10.25 9.03 10.25C9.11 10.25 9.19 10.27 9.27 10.3C9.28 10.3 9.28 10.3 9.29 10.3C9.37 10.33 9.45 10.39 9.51 10.45C9.52 10.46 9.53 10.46 9.53 10.47L11.53 12.47C11.82 12.76 11.82 13.24 11.53 13.53Z"
+                      ></path>
+                      <path
+                        d="M17.4297 8.81048C18.3797 8.82048 19.6997 8.82048 20.8297 8.82048C21.3997 8.82048 21.6997 8.15048 21.2997 7.75048C19.8597 6.30048 17.2797 3.69048 15.7997 2.21048C15.3897 1.80048 14.6797 2.08048 14.6797 2.65048V6.14048C14.6797 7.60048 15.9197 8.81048 17.4297 8.81048Z"
+                      ></path>
+                    </g>
+                  </svg>
+                  <span class="text-sm group-hover:underline">Upload</span>
+                </label>
+              </div>
+              <div>
+                <input
+                  @change="selectInputType('write')"
+                  type="radio"
+                  id="write"
+                  name="inputType"
+                  class="peer sr-only"
+                  disabled
+                />
+                <label
+                  for="write"
+                  title="코드 직접 입력 (사용 뷸가)"
+                  class="group flex justify-center items-center gap-2 px-2.5 py-2 text-stone-400 cursor-pointer rounded-xl rounded-l-none border-l border-stone-500 peer-checked:underline peer-checked:bg-stone-800 peer-disabled:cursor-not-allowed peer-disabled:bg-stone-700"
+                >
+                  <svg
+                    class="size-6 fill-stone-400"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                    <g
+                      id="SVGRepo_tracerCarrier"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    ></g>
+                    <g id="SVGRepo_iconCarrier">
+                      <path
+                        d="M21 22H3C2.59 22 2.25 21.66 2.25 21.25C2.25 20.84 2.59 20.5 3 20.5H21C21.41 20.5 21.75 20.84 21.75 21.25C21.75 21.66 21.41 22 21 22Z"
+                      ></path>
+                      <path
+                        d="M19.0206 3.48162C17.0806 1.54162 15.1806 1.49162 13.1906 3.48162L11.9806 4.69162C11.8806 4.79162 11.8406 4.95162 11.8806 5.09162C12.6406 7.74162 14.7606 9.86162 17.4106 10.6216C17.4506 10.6316 17.4906 10.6416 17.5306 10.6416C17.6406 10.6416 17.7406 10.6016 17.8206 10.5216L19.0206 9.31162C20.0106 8.33162 20.4906 7.38162 20.4906 6.42162C20.5006 5.43162 20.0206 4.47162 19.0206 3.48162Z"
+                      ></path>
+                      <path
+                        d="M15.6103 11.5308C15.3203 11.3908 15.0403 11.2508 14.7703 11.0908C14.5503 10.9608 14.3403 10.8208 14.1303 10.6708C13.9603 10.5608 13.7603 10.4008 13.5703 10.2408C13.5503 10.2308 13.4803 10.1708 13.4003 10.0908C13.0703 9.81078 12.7003 9.45078 12.3703 9.05078C12.3403 9.03078 12.2903 8.96078 12.2203 8.87078C12.1203 8.75078 11.9503 8.55078 11.8003 8.32078C11.6803 8.17078 11.5403 7.95078 11.4103 7.73078C11.2503 7.46078 11.1103 7.19078 10.9703 6.91078C10.9491 6.86539 10.9286 6.82022 10.9088 6.77532C10.7612 6.442 10.3265 6.34455 10.0688 6.60231L4.34032 12.3308C4.21032 12.4608 4.09032 12.7108 4.06032 12.8808L3.52032 16.7108C3.42032 17.3908 3.61032 18.0308 4.03032 18.4608C4.39032 18.8108 4.89032 19.0008 5.43032 19.0008C5.55032 19.0008 5.67032 18.9908 5.79032 18.9708L9.63032 18.4308C9.81032 18.4008 10.0603 18.2808 10.1803 18.1508L15.9016 12.4295C16.1612 12.1699 16.0633 11.7245 15.7257 11.5804C15.6877 11.5642 15.6492 11.5476 15.6103 11.5308Z"
+                      ></path>
+                    </g>
+                  </svg>
+                  <span class="text-sm group-hover:underline">Write</span>
+                </label>
+              </div>
+            </div>
+
             <button
               type="submit"
               :disabled="files.length === 0 && message.trim() === ''"
-              class="disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+              class="group flex justify-center items-center border border-stone-500 p-2 rounded-xl cursor-pointer hover:border-stone-400 disabled:cursor-not-allowed disabled:opacity-50"
               title="분석 시작"
             >
               <svg
-                class="size-6 fill-stone-500 transition duration-150 hover:fill-stone-400"
+                class="size-8 fill-stone-500 group-hover:fill-stone-400"
                 viewBox="0 0 24 24"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -413,6 +460,86 @@ onBeforeUnmount(() => {
               </svg>
             </button>
           </div>
+        </div>
+
+        <div
+          v-if="inputType === 'upload'"
+          class="flex justify-center items-center w-3xl h-64"
+        >
+          <input
+            type="file"
+            accept=".js,.ts,.jsx,.tsx,.py,.java,.c,.cpp,.cs,.rb,.go,.php,.html,.css,.json,.xml,.yaml,.yml, .vue,.sh,.md"
+            id="file-upload"
+            class="hidden"
+            ref="fileInputRef"
+            @change="handleFileChange"
+          />
+          <label
+            for="file-upload"
+            title="클릭해서 업로드"
+            class="flex flex-col items-center justify-center gap-6 size-full border border-dashed border-pink-500 text-sm rounded-xl cursor-pointer hover:bg-stone-800/20 sm:text-base"
+          >
+            <svg
+              class="size-12 fill-stone-500"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+              <g
+                id="SVGRepo_tracerCarrier"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              ></g>
+              <g id="SVGRepo_iconCarrier">
+                <path
+                  d="M18.6897 11.5308C18.1197 11.3808 17.4497 11.3008 16.6497 11.3008C15.5397 11.3008 15.1297 11.5708 14.5597 12.0008C14.5297 12.0208 14.4997 12.0508 14.4697 12.0808L13.5197 13.0908C12.7197 13.9308 11.2797 13.9408 10.4797 13.0808L9.52969 12.0808C9.49969 12.0508 9.46969 12.0208 9.43969 12.0008C8.86969 11.5708 8.45969 11.3008 7.34969 11.3008C6.54969 11.3008 5.87969 11.3808 5.30969 11.5308C2.92969 12.1708 2.92969 14.0608 2.92969 15.7208V16.6508C2.92969 19.1608 2.92969 22.0008 8.27969 22.0008H15.7197C19.2697 22.0008 21.0697 20.2008 21.0697 16.6508V15.7208C21.0697 14.0608 21.0697 12.1708 18.6897 11.5308ZM14.3297 18.4008H9.66969C9.28969 18.4008 8.97969 18.0908 8.97969 17.7008C8.97969 17.3108 9.28969 17.0008 9.66969 17.0008H14.3297C14.7097 17.0008 15.0197 17.3108 15.0197 17.7008C15.0197 18.0908 14.7097 18.4008 14.3297 18.4008Z"
+                ></path>
+                <path
+                  d="M12.6684 4.3L13.3184 4.95C13.5784 5.21 14.0084 5.21 14.2684 4.95C14.5284 4.69 14.5284 4.26 14.2684 4L12.4684 2.2C12.4084 2.14 12.3284 2.09 12.2484 2.05C12.1684 2.02 12.0884 2 11.9984 2C11.9084 2 11.8284 2.02 11.7384 2.05C11.6584 2.08 11.5984 2.13 11.5384 2.18C11.5284 2.19 11.5284 2.19 11.5184 2.19L9.71844 4C9.45844 4.26 9.45844 4.69 9.71844 4.95C9.97844 5.21 10.4084 5.21 10.6684 4.95L11.3184 4.3V6H12.6684V4.3Z"
+                ></path>
+                <path
+                  d="M19.2091 10.12C19.1691 10.1 19.1191 10.09 19.0791 10.08H19.0691C18.3591 9.89 17.5691 9.8 16.6491 9.8C15.1091 9.8 14.3791 10.25 13.7191 10.75C13.5791 10.85 13.4791 10.95 13.3791 11.05L12.4291 12.06C12.3291 12.16 12.1691 12.22 11.9991 12.22C11.9391 12.22 11.7191 12.21 11.5691 12.05L10.5891 11.02C10.4891 10.91 10.3691 10.82 10.3391 10.8C9.61906 10.25 8.88906 9.8 7.34906 9.8C6.42906 9.8 5.63906 9.89 4.91906 10.08C4.87906 10.09 4.82906 10.1 4.78906 10.12C4.79906 8.13 4.99906 6 9.20906 6H11.3291V9.08C11.3291 9.45 11.6291 9.75 11.9991 9.75C12.3691 9.75 12.6691 9.45 12.6691 9.08V6H14.7891C18.9991 6 19.1991 8.13 19.2091 10.12Z"
+                ></path>
+              </g>
+            </svg>
+            Upload Here
+          </label>
+        </div>
+        <div
+          v-else-if="inputType === 'write'"
+          class="flex justify-center items-center w-3xl h-64"
+        >
+          <input v-model="message" type="text" id="write-code" class="hidden" />
+          <label
+            @click="openCodeInputModal"
+            for="write-code"
+            title="클릭하여 직접 코드 입력"
+            class="flex flex-col items-center justify-center gap-6 size-full border border-dashed border-pink-500 text-sm rounded-xl cursor-pointer hover:bg-stone-800/20 sm:text-base"
+          >
+            <svg
+              class="size-12 fill-stone-500"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+              <g
+                id="SVGRepo_tracerCarrier"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              ></g>
+              <g id="SVGRepo_iconCarrier">
+                <path
+                  d="M13.43 5.43V6.77C10.81 6.98 9.32 8.66 9.32 11.43V16H5.43C3.14 16 2 14.86 2 12.57V5.43C2 3.14 3.14 2 5.43 2H10C12.29 2 13.43 3.14 13.43 5.43Z"
+                ></path>
+                <path
+                  d="M18.5703 8H14.0003C11.7103 8 10.5703 9.14 10.5703 11.43V18.57C10.5703 20.86 11.7103 22 14.0003 22H18.5703C20.8603 22 22.0003 20.86 22.0003 18.57V11.43C22.0003 9.14 20.8603 8 18.5703 8ZM18.1303 15.75H17.2503V16.63C17.2503 17.04 16.9103 17.38 16.5003 17.38C16.0903 17.38 15.7503 17.04 15.7503 16.63V15.75H14.8703C14.4603 15.75 14.1203 15.41 14.1203 15C14.1203 14.59 14.4603 14.25 14.8703 14.25H15.7503V13.37C15.7503 12.96 16.0903 12.62 16.5003 12.62C16.9103 12.62 17.2503 12.96 17.2503 13.37V14.25H18.1303C18.5403 14.25 18.8803 14.59 18.8803 15C18.8803 15.41 18.5403 15.75 18.1303 15.75Z"
+                ></path>
+              </g>
+            </svg>
+            코드 직접 입력
+          </label>
         </div>
       </form>
     </main>
@@ -629,13 +756,13 @@ onBeforeUnmount(() => {
               >
               <p
                 v-if="currentIssue"
-                class="text-stone-300 mt-2 text-sm leading-relaxed whitespace-pre-wrap"
+                class="text-stone-300 mt-2 text-xs leading-relaxed whitespace-pre-wrap"
               >
                 {{ currentIssue.description }}
               </p>
               <p
                 v-else
-                class="text-stone-300 mt-2 text-sm leading-relaxed whitespace-pre-wrap"
+                class="text-stone-300 mt-2 text-xs leading-relaxed whitespace-pre-wrap"
               >
                 발견된 취약점이 적습니다. 기본 보안 점검을 계속 유지하세요.
               </p>
@@ -654,7 +781,7 @@ onBeforeUnmount(() => {
                 }"
                 >Potential Exploit Scenario</span
               >
-              <p class="text-stone-400 mt-1 text-xs leading-relaxed">
+              <p class="text-stone-300 mt-1 text-xs leading-relaxed">
                 {{ currentIssue.exploit_example }}
               </p>
             </div>
@@ -669,6 +796,13 @@ onBeforeUnmount(() => {
     :is-open="isSourceModalOpen"
     @close="closeSourceModal"
     :file="submittedSource"
+  />
+
+  <CodeInputModal
+    :is-open="isCodeInputModalOpen"
+    :model-value="message"
+    @update:model-value="(val) => (message = val)"
+    @close="closeCodeInputModal"
   />
 </template>
 

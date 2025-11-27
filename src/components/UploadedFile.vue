@@ -70,7 +70,7 @@ const onRemove = () => {
 
     <button
       @click="onRemove"
-      class="group ml-2 p-2 rounded-full hover:bg-stone-700/50 transition duration-200 ease-in-out flex shrink-0 cursor-pointer"
+      class="group ml-2 p-2 rounded-full hover:bg-stone-700/50 flex shrink-0 cursor-pointer"
       :aria-label="'Remove file ' + props.file.name"
       title="업로드 취소"
     >

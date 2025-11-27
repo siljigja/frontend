@@ -147,7 +147,7 @@ onMounted(() => {
         </h3>
         <button
           @click="closeModal"
-          class="p-2 rounded-full text-stone-400 hover:bg-stone-700 hover:text-white transition duration-200 ease-in-out cursor-pointer"
+          class="p-2 rounded-full text-stone-400 hover:bg-stone-700 hover:text-white cursor-pointer"
           aria-label="Close modal"
         >
           <svg
