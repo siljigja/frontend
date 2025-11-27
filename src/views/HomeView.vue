@@ -31,11 +31,12 @@ const isSignedIn = inject("is-signed-in");
               ></path>
             </g>
           </svg>
-          <p class="text-3xl sm:text-4xl lg:text-5xl">
-            KEEP YOUR CODE
+          <p class="text-3xl sm:text-4xl lg:text-5xl uppercase">
+            Keep your code
             <br />
-            <span class="text-stone-400 text-4xl sm:text-5xl lg:text-6xl"
-              >SECURE.</span
+            <span
+              class="text-stone-400 text-4xl sm:text-5xl lg:text-6xl uppercase"
+              >Secure.</span
             >
           </p>
         </div>
@@ -50,9 +51,9 @@ const isSignedIn = inject("is-signed-in");
 
       <div
         v-if="isSignedIn"
-        class="flex flex-col items-center justify-center w-fit h-fit gap-2.5 cursor-default mt-12 mb-16"
+        class="flex flex-col items-center justify-center w-fit h-fit gap-2.5 mt-12 mb-16"
       >
-        <span class="text-xl">클릭해서 분석 시작</span>
+        <span class="text-xl">Start the Analysis</span>
         <svg
           class="size-8 fill-stone-500"
           viewBox="0 0 24 24"
@@ -105,8 +106,9 @@ const isSignedIn = inject("is-signed-in");
 
       <RouterLink
         v-if="isSignedIn"
-        class="w-full max-w-5xl h-fit cursor-pointer rounded-t-3xl transition duration-200 ease-in-out shadow-[0_0_15px_5px]/40 shadow-stone-400/50 hover:shadow-[0_0_10px_6px]/70 hover:shadow-pink-500/50"
+        class="w-full max-w-5xl h-fit cursor-pointer rounded-t-3xl transition duration-200 ease-in-out shadow-[0_0_15px_5px]/40 shadow-stone-400/50 hover:shadow-[0_0_20px_6px]/70 hover:shadow-pink-500/50"
         to="/analysis"
+        title="취약점 분석 시작"
       >
         <section
           class="flex flex-col items-center justify-end w-full h-fit gap-10 md:gap-16 rounded-t-3xl border-2 border-b-0 border-stone-500 py-12 sm:py-16 md:py-20 px-36"

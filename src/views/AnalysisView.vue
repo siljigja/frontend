@@ -4,6 +4,8 @@ import { ref, onMounted, onBeforeUnmount, watch, computed } from "vue";
 import Navbar from "@/components/Navbar.vue";
 import UploadedFile from "@/components/UploadedFile.vue";
 import UploadedFileModal from "@/components/UploadedFileModal.vue";
+
+// JSON 응답 예시, 백엔드 연동시 제거
 import mockResponse from "@/mock_response.json";
 
 // PrismJS
@@ -23,7 +25,7 @@ import "prismjs/components/prism-go";
 import "prismjs/components/prism-bash";
 import "prismjs/components/prism-yaml";
 
-// 예시 데이터
+// JSON 응답 예시 변수
 const MOCK_RESPONSE = mockResponse;
 
 // 상태
@@ -111,6 +113,10 @@ const removeFile = (idToRemove) => {
   files.value = files.value.filter((file) => file.id !== idToRemove);
 };
 
+// 제출 처리
+// ==================================================
+// 백엔드 연동시 여기 코드 수정 필요
+// ==================================================
 const handleSubmit = () => {
   if (files.value.length > 0 || message.value.trim() !== "") {
     // 제출 처리
@@ -130,19 +136,23 @@ const handleSubmit = () => {
       };
     }
 
-    // ! 실제 API 대신 예시 응답 사용
+    // setTimeout은 백엔드 연동시 제거
+    // 결과 나왔을 때 awaitingResponse.value = false; stopLoadingAnimation(); 실행 필요
     setTimeout(() => {
+      // Mock response for analysis result
       analysisResult.value = MOCK_RESPONSE;
       currentIssueIndex.value = 0;
 
       awaitingResponse.value = false;
       stopLoadingAnimation();
-    }, 5000);
+    }, 3000);
   }
 };
+// ==================================================
+// 수정 필요 코드 끝
+// ==================================================
 
 // 결과 처리
-
 const getLanguage = (fileName) => {
   if (!fileName) return "plaintext";
   const parts = fileName.split(".");
@@ -174,11 +184,23 @@ const getLanguage = (fileName) => {
 
 const currentIssue = computed(() => {
   if (!analysisResult.value || !analysisResult.value.issues) return null;
+  if (analysisResult.value.issues.length === 0) return null;
   return analysisResult.value.issues[currentIssueIndex.value];
 });
 
+const issueStyle = computed(() => {
+  if (currentIssue.value && currentIssue.value.display_meta) {
+    const color = currentIssue.value.display_meta.severity_color || "#666";
+    return {
+      borderColor: color,
+      color: color,
+    };
+  }
+  return {};
+});
+
 const highlightedCode = computed(() => {
-  if (!currentIssue.value || !currentIssue.value.fix_code) return "";
+  if (!currentIssue.value?.fix_code) return "";
 
   const fileName = submittedSource.value?.name || "code.js";
   const langAlias = getLanguage(fileName);
@@ -192,7 +214,15 @@ const highlightedCode = computed(() => {
 const handleCopyCode = async () => {
   if (!currentIssue.value?.fix_code) return;
   try {
-    await navigator.clipboard.writeText(currentIssue.value.fix_code);
+    const textarea = document.createElement("textarea");
+    textarea.value = currentIssue.value.fix_code;
+    textarea.style.position = "fixed";
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+
     isCopied.value = true;
     setTimeout(() => {
       isCopied.value = false;
@@ -224,6 +254,7 @@ const hasUnsavedData = computed(() => {
 // 페이지 이탈 방지
 onBeforeRouteLeave((to, from, next) => {
   if (hasUnsavedData.value) {
+    // 추후 window.confirm 대신 커스텀 모달로 변경 가능
     const confirmed = window.confirm(
       "정말 페이지를 떠나시겠습니까?\n현재 데이터는 저장되지 않습니다."
     );
@@ -319,7 +350,7 @@ onBeforeUnmount(() => {
           <div class="flex shrink-0 w-fit h-fit gap-3">
             <input
               type="file"
-              accept=".js,.ts,.jsx,.tsx,.py,.java,.c,.cpp,.cs,.rb,.go,.php,.html,.css,.json,.xml,.yaml,.yml"
+              accept=".js,.ts,.jsx,.tsx,.py,.java,.c,.cpp,.cs,.rb,.go,.php,.html,.css,.json,.xml,.yaml,.yml, .vue,.sh,.md"
               id="file-upload"
               class="hidden"
               ref="fileInputRef"
@@ -348,7 +379,7 @@ onBeforeUnmount(() => {
                 ></g>
                 <g id="SVGRepo_iconCarrier">
                   <path
-                    d="M20.5 10.19H17.61C15.24 10.19 13.31 8.26 13.31 5.89V3C13.31 2.45 12.86 2 12.31 2H8.07C4.99 2 2.5 4 2.5 7.57V16.43C2.5 20 4.99 22 8.07 22H15.93C19.01 22 21.5 20 21.5 16.43V11.19C21.5 10.64 21.05 10.19 20.5 10.19ZM11.53 13.53C11.38 13.68 11.19 13.75 11 13.75C10.81 13.75 10.62 13.68 10.47 13.53L9.75 12.81V17C9.75 17.41 9.41 17.75 9 17.75C8.59 17.75 8.25 17.41 8.25 17V12.81L7.53 13.53C7.24 13.82 6.76 13.82 6.47 13.53C6.18 13.24 6.18 12.76 6.47 12.47L8.47 10.47C8.54 10.41 8.61 10.36 8.69 10.32C8.71 10.31 8.74 10.3 8.76 10.29C8.82 10.27 8.88 10.26 8.95 10.25C8.98 10.25 9 10.25 9.03 10.25C9.11 10.25 9.19 10.27 9.27 10.3C9.28 10.3 9.28 10.3 9.29 10.3C9.37 10.33 9.45 10.39 9.51 10.45C9.52 10.46 9.53 10.46 9.53 10.47L11.53 12.47C11.82 12.76 11.82 13.24 11.53 13.53Z"
+                    d="M20.5 10.19H17.61C15.24 10.19 13.31 8.26 13.31 5.89V3C13.31 2.45 12.86 2 12.31 2H8.07C4.99 2 2.5 4 2.5 7.57V16.43C2.5 20 4.99 22 8.07 22H15.93C19.01 22 21.5 20 21.5 16.43V11.19C21.5 10.64 21.05 10.19 20.5 10.19ZM11.53 13.53C11.38 13.68 11.19 13.75 11 13.75C10.81 13.75 10.62 13.68 10.47 13.53L9.75 12.81V17C9.75 17.41 9.41 17.75 9.00 17.75C8.59 17.75 8.25 17.41 8.25 17V12.81L7.53 13.53C7.24 13.82 6.76 13.82 6.47 13.53C6.18 13.24 6.18 12.76 6.47 12.47L8.47 10.47C8.54 10.41 8.61 10.36 8.69 10.32C8.71 10.31 8.74 10.3 8.76 10.29C8.82 10.27 8.88 10.26 8.95 10.25C8.98 10.25 9 10.25 9.03 10.25C9.11 10.25 9.19 10.27 9.27 10.3C9.28 10.3 9.28 10.3 9.29 10.3C9.37 10.33 9.45 10.39 9.51 10.45C9.52 10.46 9.53 10.46 9.53 10.47L11.53 12.47C11.82 12.76 11.82 13.24 11.53 13.53Z"
                   ></path>
                   <path
                     d="M17.4297 8.81048C18.3797 8.82048 19.6997 8.82048 20.8297 8.82048C21.3997 8.82048 21.6997 8.15048 21.2997 7.75048C19.8597 6.30048 17.2797 3.69048 15.7997 2.21048C15.3897 1.80048 14.6797 2.08048 14.6797 2.65048V6.14048C14.6797 7.60048 15.9197 8.81048 17.4297 8.81048Z"
@@ -392,7 +423,7 @@ onBeforeUnmount(() => {
       class="flex flex-col justify-center items-center gap-6 h-full"
     >
       <svg
-        class="size-24 fill-stone-500 animate-pulse"
+        class="size-16 sm:size-24 fill-stone-500 animate-pulse"
         viewBox="0 0 24 24"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -405,10 +436,10 @@ onBeforeUnmount(() => {
         ></g>
         <g id="SVGRepo_iconCarrier">
           <path
-            d="M5 13.5C4.06 13.5 3.19 13.83 2.5 14.38C1.58 15.11 1 16.24 1 17.5C1 19.71 2.79 21.5 5 21.5C6.01 21.5 6.93 21.12 7.64 20.5C8.47 19.77 9 18.7 9 17.5C9 15.29 7.21 13.5 5 13.5ZM6 17.75C6 18.01 5.86 18.26 5.64 18.39L4.39 19.14C4.27 19.22 4.13 19.25 4 19.25C3.75 19.25 3.5 19.12 3.36 18.89C3.15 18.53 3.26 18.07 3.62 17.86L4.51 17.33V16.25C4.51 15.84 4.85 15.5 5.26 15.5C5.67 15.5 6 15.84 6 16.25V17.75Z"
+            d="M18.3281 5.67L6.58813 17.41C6.14813 17.85 5.40813 17.79 5.04813 17.27C3.80813 15.46 3.07812 13.32 3.07812 11.12V6.73C3.07812 5.91 3.69813 4.98 4.45813 4.67L10.0281 2.39C11.2881 1.87 12.6881 1.87 13.9481 2.39L17.9981 4.04C18.6581 4.31 18.8281 5.17 18.3281 5.67Z"
           ></path>
           <path
-            d="M17.25 2.42969H7.75C4.9 2.42969 3 4.32969 3 7.17969V11.6397C3 11.9897 3.36 12.2397 3.7 12.1497C4.12 12.0497 4.55 11.9997 5 11.9997C7.86 11.9997 10.22 14.3197 10.48 17.1297C10.5 17.4097 10.73 17.6297 11 17.6297H11.55L15.78 20.4497C16.4 20.8697 17.25 20.4097 17.25 19.6497V17.6297C18.67 17.6297 19.86 17.1497 20.69 16.3297C21.52 15.4897 22 14.2997 22 12.8797V7.17969C22 4.32969 20.1 2.42969 17.25 2.42969ZM15.83 10.8097H9.17C8.78 10.8097 8.46 10.4897 8.46 10.0997C8.46 9.69969 8.78 9.37969 9.17 9.37969H15.83C16.22 9.37969 16.54 9.69969 16.54 10.0997C16.54 10.4897 16.22 10.8097 15.83 10.8097Z"
+            d="M19.27 7.04159C19.92 6.49159 20.91 6.96159 20.91 7.81159V11.1216C20.91 16.0116 17.36 20.5916 12.51 21.9316C12.18 22.0216 11.82 22.0216 11.48 21.9316C10.06 21.5316 8.74001 20.8616 7.61001 19.9816C7.13001 19.6116 7.08001 18.9116 7.50001 18.4816C9.68001 16.2516 16.06 9.75159 19.27 7.04159Z"
           ></path>
         </g>
       </svg>
@@ -417,7 +448,7 @@ onBeforeUnmount(() => {
 
     <!-- 3. 결과 -->
     <main
-      v-else-if="!awaitingResponse && !isFirstInput && currentIssue"
+      v-else-if="!awaitingResponse && !isFirstInput"
       class="flex flex-col justify-start items-center size-full gap-2 pt-4 pb-8 overflow-hidden"
     >
       <button
@@ -459,6 +490,7 @@ onBeforeUnmount(() => {
         <div
           class="group flex flex-col rounded-xl border border-stone-500 w-5/12 h-full overflow-hidden relative"
         >
+          <!-- 헤더 -->
           <div
             class="flex items-center justify-between bg-stone-900 px-4 py-2 border-b border-stone-500 text-sm h-11"
           >
@@ -467,30 +499,10 @@ onBeforeUnmount(() => {
               v-if="isCopied"
               class="flex items-center gap-2 text-xs text-stone-400 uppercase cursor-default"
               title="복사 완료"
-              ><svg
-                class="size-4 fill-stone-400"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                <g
-                  id="SVGRepo_tracerCarrier"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                ></g>
-                <g id="SVGRepo_iconCarrier">
-                  <path
-                    d="M14.3498 2H9.64977C8.60977 2 7.75977 2.84 7.75977 3.88V4.82C7.75977 5.86 8.59977 6.7 9.63977 6.7H14.3498C15.3898 6.7 16.2298 5.86 16.2298 4.82V3.88C16.2398 2.84 15.3898 2 14.3498 2Z"
-                  ></path>
-                  <path
-                    d="M17.2391 4.81949C17.2391 6.40949 15.9391 7.70949 14.3491 7.70949H9.64906C8.05906 7.70949 6.75906 6.40949 6.75906 4.81949C6.75906 4.25949 6.15906 3.90949 5.65906 4.16949C4.24906 4.91949 3.28906 6.40949 3.28906 8.11949V17.5295C3.28906 19.9895 5.29906 21.9995 7.75906 21.9995H16.2391C18.6991 21.9995 20.7091 19.9895 20.7091 17.5295V8.11949C20.7091 6.40949 19.7491 4.91949 18.3391 4.16949C17.8391 3.90949 17.2391 4.25949 17.2391 4.81949ZM15.3391 12.7295L11.3391 16.7295C11.1891 16.8795 10.9991 16.9495 10.8091 16.9495C10.6191 16.9495 10.4291 16.8795 10.2791 16.7295L8.77906 15.2295C8.48906 14.9395 8.48906 14.4595 8.77906 14.1695C9.06906 13.8795 9.54906 13.8795 9.83906 14.1695L10.8091 15.1395L14.2791 11.6695C14.5691 11.3795 15.0491 11.3795 15.3391 11.6695C15.6291 11.9595 15.6291 12.4395 15.3391 12.7295Z"
-                  ></path>
-                </g></svg
               >Copied to Clipboard</span
             >
             <span
-              v-else
+              v-else-if="currentIssue"
               @click="handleCopyCode"
               class="text-xs text-stone-500 uppercase hover:underline group-hover:text-stone-400 cursor-pointer"
               title="클릭해서 복사"
@@ -499,8 +511,42 @@ onBeforeUnmount(() => {
           </div>
 
           <pre
+            v-if="currentIssue"
             class="scrollbar-thin scrollbar-thumb-stone-600 scrollbar-track-stone-800 overflow-auto h-full p-4 m-0 text-sm"
           ><code v-html="highlightedCode" :class="`language-${getLanguage(submittedSource?.name)}`"></code></pre>
+          <div
+            v-else
+            class="flex flex-col justify-center items-center gap-6 h-full text-stone-500"
+          >
+            <svg
+              class="size-12 fill-stone-500"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+              <g
+                id="SVGRepo_tracerCarrier"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              ></g>
+              <g id="SVGRepo_iconCarrier">
+                <path
+                  d="M5.97 1H3.03C1.76 1 1 1.76 1 3.03V5.97C1 7.24 1.76 8 3.03 8H5.97C7.24 8 8 7.24 8 5.97V3.03C8 1.76 7.24 1 5.97 1ZM6.47 5.56C6.72 5.81 6.72 6.22 6.47 6.47C6.34 6.59 6.17 6.65 6.01 6.65C5.85 6.65 5.69 6.59 5.56 6.47L4.49 5.41L3.45 6.47C3.32 6.59 3.16 6.65 2.98 6.65C2.82 6.65 2.66 6.59 2.53 6.47C2.28 6.22 2.28 5.81 2.53 5.56L3.6 4.5L2.54 3.45C2.29 3.2 2.29 2.79 2.54 2.54C2.79 2.29 3.2 2.29 3.45 2.54L4.49 3.6L5.55 2.54C5.8 2.29 6.21 2.29 6.46 2.54C6.71 2.79 6.71 3.2 6.46 3.45L5.41 4.5L6.47 5.56Z"
+                ></path>
+                <path
+                  d="M21.4995 15.8197C21.4995 15.9697 21.4495 16.1197 21.3195 16.2497C19.8695 17.7097 17.2895 20.3097 15.8095 21.7997C15.6795 21.9397 15.5095 21.9997 15.3395 21.9997C15.0095 21.9997 14.6895 21.7397 14.6895 21.3597V17.8597C14.6895 16.3997 15.9295 15.1897 17.4495 15.1897C18.3995 15.1797 19.7195 15.1797 20.8495 15.1797C21.2395 15.1797 21.4995 15.4897 21.4995 15.8197Z"
+                ></path>
+                <path
+                  d="M21.4995 15.8197C21.4995 15.9697 21.4495 16.1197 21.3195 16.2497C19.8695 17.7097 17.2895 20.3097 15.8095 21.7997C15.6795 21.9397 15.5095 21.9997 15.3395 21.9997C15.0095 21.9997 14.6895 21.7397 14.6895 21.3597V17.8597C14.6895 16.3997 15.9295 15.1897 17.4495 15.1897C18.3995 15.1797 19.7195 15.1797 20.8495 15.1797C21.2395 15.1797 21.4995 15.4897 21.4995 15.8197Z"
+                ></path>
+                <path
+                  d="M16.63 2H10.5C9.95 2 9.5 2.45 9.5 3V6.5C9.5 8.16 8.16 9.5 6.5 9.5H3.5C2.95 9.5 2.5 9.95 2.5 10.5V17.13C2.5 19.82 4.68 22 7.37 22H12.19C12.74 22 13.19 21.55 13.19 21V17.86C13.19 15.56 15.1 13.69 17.45 13.69C17.98 13.68 19.27 13.68 20.5 13.68C21.05 13.68 21.5 13.24 21.5 12.68V6.87C21.5 4.18 19.32 2 16.63 2ZM8.72 17.01H6.08C5.67 17.01 5.33 16.67 5.33 16.26C5.33 15.84 5.67 15.5 6.08 15.5H8.72C9.15 15.5 9.47 15.84 9.47 16.26C9.47 16.67 9.15 17.01 8.72 17.01ZM11.51 13.3H6.08C5.67 13.3 5.33 12.96 5.33 12.55C5.33 12.13 5.67 11.79 6.08 11.79H11.51C11.92 11.79 12.27 12.13 12.27 12.55C12.27 12.96 11.92 13.3 11.51 13.3Z"
+                ></path>
+              </g>
+            </svg>
+            수정된 코드가 없습니다.
+          </div>
         </div>
 
         <!-- 오른쪽: 설명 -->
@@ -511,11 +557,12 @@ onBeforeUnmount(() => {
           <div
             class="flex justify-between items-center bg-stone-900 px-4 py-2 border-b border-stone-500 h-11"
           >
-            <div class="text-sm text-stone-400">
+            <div v-if="currentIssue" class="text-sm text-stone-400">
               발견된 취약점 {{ currentIssueIndex + 1 }} /
               {{ analysisResult.issues.length }}
             </div>
-            <div class="flex gap-2">
+            <div v-else class="text-sm text-stone-400">발견된 취약점 0 / 0</div>
+            <div v-if="currentIssue" class="flex gap-2">
               <button
                 @click="prevIssue"
                 :disabled="currentIssueIndex === 0"
@@ -537,49 +584,66 @@ onBeforeUnmount(() => {
 
           <!-- 내용 -->
           <div
-            class="flex flex-col p-6 gap-6 overflow-y-auto scrollbar-thin scrollbar-thumb-stone-600"
+            class="flex flex-col p-6 gap-6 overflow-y-auto scrollbar-thin scrollbar-thumb-stone-600 h-full"
           >
             <div>
               <span
                 class="text-stone-500 text-xs font-bold uppercase tracking-wider"
                 >Vulnerability</span
               >
-              <h2 class="text-xl font-bold text-stone-200 mt-1">
+              <h2
+                v-if="currentIssue"
+                class="text-xl font-bold text-stone-200 mt-1"
+              >
                 {{ currentIssue.name }}
+              </h2>
+              <h2 v-else class="text-xl font-bold text-stone-200 mt-1">
+                취약점 미발견
               </h2>
             </div>
 
-            <div class="flex gap-4 items-center">
+            <div class="flex gap-4 items-center mt-4">
               <span
+                v-if="currentIssue"
                 class="px-3 py-1 rounded-full text-sm font-semibold uppercase border-2 text-white"
-                :style="{
-                  borderColor,
-                  color: currentIssue.display_meta.severity_color || '#666',
-                }"
+                :style="issueStyle"
               >
                 {{ currentIssue.severity }}
               </span>
-              <span class="text-stone-400 text-sm"
+              <span
+                v-else
+                class="px-3 py-1 rounded-full text-sm font-semibold uppercase border-2 text-green-500 border-green-500"
+              >
+                Safe
+              </span>
+              <span v-if="currentIssue" class="text-stone-400 text-sm"
                 >Confidence:
                 {{ (currentIssue.confidence * 100).toFixed(0) }}%</span
               >
             </div>
 
-            <div class="border-t border-stone-700 pt-4">
+            <div class="border-t border-stone-700 pt-4 mt-4">
               <span
                 class="text-stone-500 text-xs font-bold uppercase tracking-wider"
                 >Description & Analysis</span
               >
               <p
+                v-if="currentIssue"
                 class="text-stone-300 mt-2 text-sm leading-relaxed whitespace-pre-wrap"
               >
                 {{ currentIssue.description }}
               </p>
+              <p
+                v-else
+                class="text-stone-300 mt-2 text-sm leading-relaxed whitespace-pre-wrap"
+              >
+                발견된 취약점이 적습니다. 기본 보안 점검을 계속 유지하세요.
+              </p>
             </div>
 
             <div
-              v-if="currentIssue.exploit_example"
-              class="bg-stone-800/50 rounded-lg p-4 border border-stone-700"
+              v-if="currentIssue && currentIssue.exploit_example"
+              class="bg-stone-800/50 rounded-lg p-4 border border-stone-700 mt-4"
             >
               <span
                 class="text-xs font-bold uppercase tracking-wider"

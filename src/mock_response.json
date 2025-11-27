@@ -23,10 +23,7 @@
       "exploit_example": "읽기 전용 시연: 악성 사용자는 자신의 GitHub 인증을 통해 얻은 'code'와 자신의 state(또는 빈값)를 피해자 인증 콜백에 전달해 서버가 state를 검증하지 않으면 계정 연결이 의도치 않게 발생할 수 있습니다(비파괴적 판정).",
       "display_meta": {
         "severity_color": "#FF6B00",
-        "highlight_lines": [
-          36,
-          56
-        ],
+        "highlight_lines": [36, 56],
         "fix_color": "#0A66FF",
         "pill_color": "#FF6B00"
       }
@@ -44,14 +41,10 @@
       "exploit_example": "읽기 전용 시연: 실패 시 tokenResponse.data 전체가 로깅되면 로그 검색에서 access_token 값을 확인할 수 있으며, 로그 접근 권한이 있는 내부자 또는 유출된 로그로 인해 계정 세션 탈취 가능(비파괴적 확인).",
       "display_meta": {
         "severity_color": "#FFC107",
-        "highlight_lines": [
-          54,
-          57
-        ],
+        "highlight_lines": [54, 57],
         "fix_color": "#0A66FF",
         "pill_color": "#FFC107"
       }
     }
   ]
 }
-
