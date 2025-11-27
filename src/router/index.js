@@ -15,24 +15,9 @@ const router = createRouter({
       component: HomeView,
     },
     {
-      path: "/sign-in",
-      name: "sign-in",
-      component: SignInView,
-    },
-    {
-      path: "/sign-up",
-      name: "sign-up",
-      component: SignUpView,
-    },
-    {
       path: "/analysis",
       name: "security-analysis",
       component: AnalysisView,
-    },
-    {
-      path: "/profile",
-      name: "profile",
-      component: ProfileView,
     },
     {
       path: "/:catchAll(.*)",
