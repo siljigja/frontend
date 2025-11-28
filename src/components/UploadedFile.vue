@@ -32,7 +32,7 @@ const onRemove = () => {
 
 <template>
   <div
-    class="flex items-center p-2 border-2 border-stone-500 rounded-xl max-w-xs"
+    class="flex items-center p-2 border border-stone-500 rounded-xl max-w-xs"
   >
     <svg
       class="size-5 fill-pink-500/50 mr-2 shrink-0"

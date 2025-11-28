@@ -1,10 +1,9 @@
 <script setup>
 import { onBeforeRouteLeave } from "vue-router";
-import { ref, onMounted, onBeforeUnmount, watch, computed } from "vue";
+import { ref, onMounted, onBeforeUnmount, computed } from "vue";
 import Navbar from "@/components/Navbar.vue";
 import UploadedFile from "@/components/UploadedFile.vue";
 import UploadedFileModal from "@/components/UploadedFileModal.vue";
-import CodeInputModal from "@/components/CodeInputModal.vue";
 
 // ==================================================
 // JSON 응답 예시, 백엔드 연동시 제거
@@ -51,12 +50,12 @@ let loadingInterval = null;
 const analysisResult = ref(null);
 const currentIssueIndex = ref(0);
 
-const files = ref([]);
+const file = ref(null);
 const message = ref("");
+const messageTitle = ref("");
 const fileInputRef = ref(null);
 const submittedSource = ref(null);
 const isSourceModalOpen = ref(false);
-const isCodeInputModalOpen = ref(false);
 
 // 로딩 애니메이션
 const startLoadingAnimation = () => {
@@ -66,7 +65,6 @@ const startLoadingAnimation = () => {
     loadingText.value = loadingTexts[loadingMsgIndex.value];
   }, 1200);
 };
-
 const stopLoadingAnimation = () => {
   if (loadingInterval) {
     clearInterval(loadingInterval);
@@ -82,25 +80,12 @@ const closeSourceModal = () => {
   isSourceModalOpen.value = false;
 };
 
-// 코드 입력 모달
-const openCodeInputModal = () => {
-  isCodeInputModalOpen.value = true;
-};
-const closeCodeInputModal = () => {
-  isCodeInputModalOpen.value = false;
-};
-
 // 입력 타입 선택
 const selectInputType = (type) => {
   inputType.value = type;
 };
 
 // 입력 처리
-watch(message, (newMessage) => {
-  // Typed message clears file input for mutual exclusivity
-  if (newMessage.trim() !== "") files.value = [];
-});
-
 const formatFileSize = (bytes) => {
   if (bytes === 0) return "0 Byte";
   const k = 1024;
@@ -110,8 +95,9 @@ const formatFileSize = (bytes) => {
 };
 
 const handleFileChange = (e) => {
-  const newFile = e.target.files[0];
+  const newFile = e.target.files ? e.target.files[0] : null;
   if (!newFile) return;
+
   const newFileObject = {
     id: Date.now() + Math.random(),
     file: newFile,
@@ -119,12 +105,13 @@ const handleFileChange = (e) => {
     size: newFile.size,
     type: newFile.type,
   };
-  files.value = [newFileObject];
+
+  file.value = newFileObject;
   if (e.target) e.target.value = null;
 };
 
-const removeFile = (idToRemove) => {
-  files.value = files.value.filter((file) => file.id !== idToRemove);
+const removeFile = () => {
+  file.value = null;
 };
 
 // 제출 처리
@@ -133,7 +120,7 @@ const removeFile = (idToRemove) => {
 // 수정: inputType에 따라 정확한 소스를 제출하도록 로직 변경
 // ==================================================
 const handleSubmit = () => {
-  if (files.value.length > 0 || message.value.trim() !== "") {
+  if (file.value || message.value.trim() !== "") {
     // 제출 처리
     isFirstInput.value = false;
     awaitingResponse.value = true;
@@ -142,12 +129,14 @@ const handleSubmit = () => {
     // 입력 타입에 따라 제출 소스 결정
     if (inputType.value === "upload") {
       // 파일 업로드 모드
-      submittedSource.value = files.value[0];
+      submittedSource.value = file.value;
     } else if (inputType.value === "write") {
       // 코드 작성 모드
+      const submittedSourceName =
+        messageTitle.value.trim() !== "" ? messageTitle.value : "index.js";
       submittedSource.value = {
-        name: "TypedCodeInput.txt", // 변경: TypedInput.txt 대신 명확한 이름 사용
-        file: new File([message.value], "TypedCodeInput.txt", {
+        name: submittedSourceName,
+        file: new File([message.value], submittedSourceName, {
           type: "text/plain",
         }),
         size: new Blob([message.value]).size,
@@ -168,7 +157,7 @@ const handleSubmit = () => {
       // 결과 나왔을 때 awaitingResponse.value = false, stopLoadingAnimation() 실행 필요
       awaitingResponse.value = false;
       stopLoadingAnimation();
-    }, 3000);
+    }, 2000);
   }
 };
 // ==================================================
@@ -271,7 +260,7 @@ const prevIssue = () => {
 
 // 페이지 이탈 경고
 const hasUnsavedData = computed(() => {
-  return files.value.length > 0 || message.value.trim() !== "";
+  return file.value || message.value.trim() !== "";
 });
 
 onBeforeRouteLeave((to, from, next) => {
@@ -341,7 +330,7 @@ onBeforeUnmount(() => {
         <div class="flex justify-between items-center w-full">
           <div class="max-h-48 overflow-y-auto">
             <UploadedFile
-              v-for="file in files"
+              v-if="inputType === 'upload' && file"
               :key="file.id"
               :file="file"
               :formatFileSize="formatFileSize"
@@ -352,7 +341,10 @@ onBeforeUnmount(() => {
           <div
             class="flex justify-center items-center shrink-0 w-fit h-fit gap-3"
           >
-            <div class="flex rounded-xl border border-stone-500">
+            <div
+              class="flex rounded-xl border border-stone-500 overflow-hidden"
+            >
+              <!-- 업로드 모드 -->
               <div>
                 <input
                   @change="selectInputType('upload')"
@@ -365,7 +357,7 @@ onBeforeUnmount(() => {
                 <label
                   for="upload"
                   title="코드 파일 업로드"
-                  class="group flex justify-center items-center gap-2 px-2.5 py-2 text-stone-400 cursor-pointer rounded-xl rounded-r-none border-r border-stone-500 peer-checked:underline peer-checked:bg-stone-800"
+                  class="group flex justify-center items-center gap-2 px-2.5 py-2 text-stone-400 cursor-pointer border-r border-stone-500 peer-checked:underline peer-checked:bg-stone-800"
                 >
                   <svg
                     class="size-6 fill-stone-400"
@@ -391,6 +383,7 @@ onBeforeUnmount(() => {
                   <span class="text-sm group-hover:underline">Upload</span>
                 </label>
               </div>
+              <!-- 입력 모드 -->
               <div>
                 <input
                   @change="selectInputType('write')"
@@ -398,12 +391,11 @@ onBeforeUnmount(() => {
                   id="write"
                   name="inputType"
                   class="peer sr-only"
-                  disabled
                 />
                 <label
                   for="write"
-                  title="코드 직접 입력 (사용 뷸가)"
-                  class="group flex justify-center items-center gap-2 px-2.5 py-2 text-stone-400 cursor-pointer rounded-xl rounded-l-none border-l border-stone-500 peer-checked:underline peer-checked:bg-stone-800 peer-disabled:cursor-not-allowed peer-disabled:bg-stone-700"
+                  title="코드 직접 입력"
+                  class="group flex justify-center items-center gap-2 px-2.5 py-2 text-stone-400 cursor-pointer border-l border-stone-500 peer-checked:underline peer-checked:bg-stone-800 peer-disabled:cursor-not-allowed peer-disabled:bg-stone-700"
                 >
                   <svg
                     class="size-6 fill-stone-400"
@@ -436,7 +428,10 @@ onBeforeUnmount(() => {
 
             <button
               type="submit"
-              :disabled="files.length === 0 && message.trim() === ''"
+              :disabled="
+                (inputType === 'upload' && !file) ||
+                (inputType === 'write' && message.trim() === '')
+              "
               class="group flex justify-center items-center border border-stone-500 p-2 rounded-xl cursor-pointer hover:border-stone-400 disabled:cursor-not-allowed disabled:opacity-50"
               title="분석 시작"
             >
@@ -462,6 +457,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
+        <!-- 업로드 -->
         <div
           v-if="inputType === 'upload'"
           class="flex justify-center items-center w-3xl h-64"
@@ -503,43 +499,28 @@ onBeforeUnmount(() => {
                 ></path>
               </g>
             </svg>
-            Upload Here
+            Click to Upload
           </label>
         </div>
+        <!-- 입력 -->
         <div
           v-else-if="inputType === 'write'"
-          class="flex justify-center items-center w-3xl h-64"
+          class="flex flex-col justify-center items-center w-3xl h-96 rounded-xl border border-dashed border-pink-500"
         >
-          <input v-model="message" type="text" id="write-code" class="hidden" />
-          <label
-            @click="openCodeInputModal"
-            for="write-code"
-            title="클릭하여 직접 코드 입력"
-            class="flex flex-col items-center justify-center gap-6 size-full border border-dashed border-pink-500 text-sm rounded-xl cursor-pointer hover:bg-stone-800/20 sm:text-base"
-          >
-            <svg
-              class="size-12 fill-stone-500"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-              <g
-                id="SVGRepo_tracerCarrier"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              ></g>
-              <g id="SVGRepo_iconCarrier">
-                <path
-                  d="M13.43 5.43V6.77C10.81 6.98 9.32 8.66 9.32 11.43V16H5.43C3.14 16 2 14.86 2 12.57V5.43C2 3.14 3.14 2 5.43 2H10C12.29 2 13.43 3.14 13.43 5.43Z"
-                ></path>
-                <path
-                  d="M18.5703 8H14.0003C11.7103 8 10.5703 9.14 10.5703 11.43V18.57C10.5703 20.86 11.7103 22 14.0003 22H18.5703C20.8603 22 22.0003 20.86 22.0003 18.57V11.43C22.0003 9.14 20.8603 8 18.5703 8ZM18.1303 15.75H17.2503V16.63C17.2503 17.04 16.9103 17.38 16.5003 17.38C16.0903 17.38 15.7503 17.04 15.7503 16.63V15.75H14.8703C14.4603 15.75 14.1203 15.41 14.1203 15C14.1203 14.59 14.4603 14.25 14.8703 14.25H15.7503V13.37C15.7503 12.96 16.0903 12.62 16.5003 12.62C16.9103 12.62 17.2503 12.96 17.2503 13.37V14.25H18.1303C18.5403 14.25 18.8803 14.59 18.8803 15C18.8803 15.41 18.5403 15.75 18.1303 15.75Z"
-                ></path>
-              </g>
-            </svg>
-            코드 직접 입력
-          </label>
+          <input
+            v-model="messageTitle"
+            name="typed-code-title"
+            type="text"
+            placeholder="index.js"
+            title="코드 파일명"
+            class="flex items-center px-4 w-full h-12 text-stone-400 text-center rounded-xl focus:outline-none caret-pink-500 placeholder:text-stone-500 hover:bg-stone-800/20 focus:bg-stone-800/20"
+          />
+          <textarea
+            v-model="message"
+            name="typed-code"
+            placeholder="Write your code here..."
+            class="px-4 py-2 size-full text-stone-300 rounded-xl resize-none whitespace-pre text-sm overflow-auto focus:outline-none caret-pink-500 placeholder:text-stone-500 scrollbar-thin"
+          ></textarea>
         </div>
       </form>
     </main>
@@ -796,13 +777,6 @@ onBeforeUnmount(() => {
     :is-open="isSourceModalOpen"
     @close="closeSourceModal"
     :file="submittedSource"
-  />
-
-  <CodeInputModal
-    :is-open="isCodeInputModalOpen"
-    :model-value="message"
-    @update:model-value="(val) => (message = val)"
-    @close="closeCodeInputModal"
   />
 </template>
 
